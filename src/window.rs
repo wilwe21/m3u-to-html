@@ -1,15 +1,14 @@
-use gtk::prelude::*;
+use gtk::{gio::ApplicationFlags, prelude::*};
 use crate::visual::wind;
 
 fn on_active(app: &gtk::Application) {
+    let main = wind();
     let window = gtk::ApplicationWindow::builder()
         .title("m3u to html")
         .resizable(false)
         .application(app)
+        .child(&main)
         .build();
-    let main = wind();
-    window.set_child(Some(&main));
-    main.show();
     window.show();
 }
 
