@@ -7,7 +7,9 @@ fn on_active(app: &gtk::Application) {
         .resizable(false)
         .application(app)
         .build();
-    window.set_child(Some(&wind()));
+    let main = wind();
+    window.set_child(Some(&main));
+    main.show();
     window.show();
 }
 
