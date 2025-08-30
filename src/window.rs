@@ -7,8 +7,8 @@ fn on_active(app: &gtk::Application) {
         .title("m3u to html")
         .resizable(false)
         .application(app)
-        .child(&main)
         .build();
+    window.set_child(Some(&main));
     window.show();
 }
 
