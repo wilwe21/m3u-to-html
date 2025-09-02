@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="../css/main.css">
+	</head>
+	<body>
+		<div class="playlist">
+			<b>{$playlist}</b>
+		</div>
+		<div class="trackHTML">
+			<div class="divine">
+				<div class="albumHTML bottom">
+					<a class="nonclick">{$album} {$tracknumber}</a>
+				</div>
+				<div class="titleHTML top">
+					<a class="nonclick">{$track}</a>
+				</div>
+			</div>
+			<div class="divine2">
+				<div class="artistHTML bottom">
+					<a class="nonclick">{$artist}</a>
+				</div>
+				<div class="top">
+				<div class="linksHTML">
+					<a class="soundclod" target="_blank" href="https://soundcloud.com/search?q={$title} {$artist}">SoundCloud</a>
+					<a class="spotify" target="_blank" href="https://open.spotify.com/search/{$title} {$artist}">Spotify</a>
+					<a class="youtube" target="_blank" href="https://www.youtube.com/results?search_query={$title} {$artist}">Youtube</a>
+				</div>
+				</div>
+			</div>
+		</div>
+		<div class="footer">
+			<a class="source" target="_blank" href="https://github.com/wilwe21/m3u-to-html">source</a>
+		</div>
+	</body>
+</html>

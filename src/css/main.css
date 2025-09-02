@@ -1,0 +1,77 @@
+:root {
+	--accent: #CBA6F7;
+	--bg: #181825;
+	--fg: #CDD6F4;
+	--radii: 7px;
+	--padding: 3px;
+	
+	font-family: "Adwaita Sans";
+}
+
+.track {
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--padding);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	margin-right: 20px;
+}
+
+.trackHTML {
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--padding);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	padding-left: var(--padding);
+	padding-right: var(--padding);
+}
+.trackHTML {
+  display: flex; 
+	flex-direction: row;
+	margin-bottom: var(--padding);
+}
+
+.divine {
+	display: flex;
+	flex-grow: 1;
+	align-items: start;
+	flex-direction: column;
+}
+
+.divine2 {
+	display: flex;
+	flex-grow: 1;
+	align-items: end;
+	flex-direction: column-reverse;
+}
+.footer {
+	display: flex;
+	flex-direction: row-reverse;
+}
+.footer > a {
+	padding-left: var(--padding);
+}
+.playlist {
+	font-size: 28px;
+	padding: var(--padding);
+	margin-bottom: var(--padding);
+}
+
+.top {
+	display: flex;
+	flex-grow: 1;
+	flex-direction: column;
+	min-height: 50px;
+}
+
+.bottom {
+	display: flex;
+	flex-grow: 1;
+	flex-direction: column-reverse;
+	min-height: 50px;
+}
+
+.nonclick {
+	all: unset;
+}

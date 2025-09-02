@@ -1,0 +1,22 @@
+		<div class="trackHTML">
+			<div class="divine">
+				<div class="albumHTML bottom">
+					<a class="nonclick">{$album} {$tracknumber}</a>
+				</div>
+				<div class="titleHTML top">
+					<a class="nonclick">{$track}</a>
+				</div>
+			</div>
+			<div class="divine2">
+				<div class="artistHTML bottom">
+					<a class="nonclick">{$artist}</a>
+				</div>
+				<div class="top">
+				<div class="linksHTML">
+					<a class="soundclod" target="_blank" href="https://soundcloud.com/search?q={$track} {$artist}">SoundCloud</a>
+					<a class="spotify" target="_blank" href="https://open.spotify.com/search/{$track} {$artist}">Spotify</a>
+					<a class="youtube" target="_blank" href="https://www.youtube.com/results?search_query={$track} {$artist}">Youtube</a>
+				</div>
+				</div>
+			</div>
+		</div>

@@ -1,8 +1,8 @@
-use std::{fs::{self, File}, io::Read, path::PathBuf};
+use std::{fs::{self, File}, io::{Read, Write}, path::{Path, PathBuf}};
 
 use gtk::{glib::property::PropertyGet, prelude::*, ResponseType};
 
-use crate::logic;
+use crate::{logic, parser};
 
 pub fn wind() -> gtk::Box {
     let mainBox = gtk::Box::new(gtk::Orientation::Vertical, 1);
@@ -49,21 +49,66 @@ fn afterBox(mbox: gtk::Box, file: gtk::gio::File, path: PathBuf) {
     }
     let button = fileButton(mbox.clone());
     mbox.append(&button);
+    let mut filename = String::new();
     if let Some(name) = path.file_name() {
-        let fileName = gtk::Label::new(name.to_str());
+        filename = name.to_os_string().into_string().unwrap();
+        let fileName = gtk::Label::new(Some(&filename));
         mbox.append(&fileName);
     }
     let f = fs::read_to_string(&path).expect("wrong file");
     let list = f.split("\n");
     let mut finList = vec!();
     for s in list {
-        if (s != "") {
+        if s != "" {
             let h = logic::Track::new(s.to_string().into());
             finList.push(h);
         }
     }
-    for t in finList {
+    let scrollBox = gtk::ListBox::new();
+    for t in &finList {
         let tr_box = t.genBox();
-        mbox.append(&tr_box);
+        scrollBox.append(&tr_box);
+    }
+    let scroll = gtk::ScrolledWindow::builder()
+        .child(&scrollBox)
+        .vexpand(true)
+        .build();
+    mbox.append(&scroll);
+    let create = gtk::Button::builder()
+        .label("Create")
+        .build();
+    create.connect_clicked(move |_| {
+        let top_template: String = match parser::open_file(&Path::new("./html/playlist")) {
+            Ok(file) => file,
+            Err(_) => String::from(include_str!("./html/playlist")),
+        };
+        let mut top = String::new();
+        for (index, line) in top_template.lines().enumerate() {
+            match parser::parse_line_playlist(line, &filename) {
+                Ok(line) => top.push_str(&line),
+                Err(err) => {
+                    eprint!("Error in line {}: {}", index+1, err);
+                }
+            }
+        }
+        let mut end = String::new();
+        let header = include_str!("./html/header");
+        end.push_str(&header);
+        let tail = include_str!("./html/tail");
+        end.push_str(&top);
+        for el in &finList {
+            end.push_str(&el.getHTML());
+        }
+        end.push_str(&tail);
+        gen_output(&end, &filename);
+    });
+    mbox.append(&create);
+}
+
+fn gen_output(end: &str, filename: &str) {
+    let mut output = File::create(format!("{}_playlist.html", filename));
+    match output {
+        Ok(mut o) => {o.write(end.as_bytes());},
+        _ => {},
     }
 }
