@@ -13,9 +13,11 @@
 				</div>
 				<div class="top">
 				<div class="linksHTML">
-					<a class="soundclod" target="_blank" href="https://soundcloud.com/search?q={$track} {$artist}">SoundCloud</a>
-					<a class="spotify" target="_blank" href="https://open.spotify.com/search/{$track} {$artist}">Spotify</a>
-					<a class="youtube" target="_blank" href="https://www.youtube.com/results?search_query={$track} {$artist}">Youtube</a>
+					<a class="soundcloud" target="_blank" href="https://soundcloud.com/search?q={$track} {$artist}"><img src="https://a-v2.sndcdn.com/assets/images/sc-icons/favicon-2cadd14bdb.ico" alt="SoundCloud"/></a>
+					<a class="spotify" target="_blank" href="https://open.spotify.com/search/{$track} {$artist}"><img src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt="Spotify"/></a>
+					<a class="youtube" target="_blank" href="https://www.youtube.com/results?search_query={$track} {$artist}"><img src="https://m.youtube.com/static/favicon.ico" alt="Youtube"/></a>
+					<a class="bandcamp" target="_blank" href="https://bandcamp.com/search?q={$track} {$artist}"><img src="https://s4.bcbits.com/client-bundle/1/PageLayout_1/favicon-78ff127104384a042453aca8d73be7dc.static/favicon/favicon-32x32.png" alt="Bandcamp"></a>
+					<a class="lastfm" target="_blank" href="https://www.last.fm/search?q={$track} {$artist}"><img src="https://www.last.fm/static/images/favicon.702b239b6194.ico" alt="LastFM"/></a>
 				</div>
 				</div>
 			</div>
