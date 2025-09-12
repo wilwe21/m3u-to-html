@@ -4,6 +4,7 @@
 	--fg: #CDD6F4;
 	--radii: 7px;
 	--padding: 3px;
+	--paddingdos: 6px;
 	
 	font-family: "Adwaita Sans";
 }
@@ -70,6 +71,11 @@
 	flex-grow: 1;
 	flex-direction: column-reverse;
 	min-height: 50px;
+}
+.cover {
+	max-height: 128px;
+	max-width: 128px;
+	padding-right: var(--paddingdos);
 }
 
 .nonclick {

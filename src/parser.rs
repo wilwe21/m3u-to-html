@@ -140,18 +140,26 @@ fn parse_var_playlist(var: &str, playlist: &str) -> Result<String, ConfigError> 
     }
 }
 
-const BUILTIN_VARS: &[&str] = &["track", "album", "tracknumber", "artist"];
+const BUILTIN_VARS: &[&str] = &["track", "album", "tracknumber", "artist", "cover"];
 
 fn replace_var(key: &str, track: &Track) -> Result<String, ConfigError> {
     if !BUILTIN_VARS.contains(&key) {
         return Err(ConfigError::UnknownVariable(String::from(key)));
     }
+    let mut numb = "".to_string();
+    if track.tracknum != "".to_string() {
+        numb.push_str(&format!("tracknumber: {}", track.tracknum));
+        if track.maxtracknum != "".to_string() {
+            numb.push_str(&format!(" / {}", track.maxtracknum));
+        }
+    }
 
     Ok(match key {
         "album" => track.album.clone(),
         "track" => track.title.clone(),
-        "tracknumber" => format!("tracknumber: {} / {}", track.tracknum, track.maxtracknum),
+        "tracknumber" => numb.clone(),
         "artist" => track.artist.clone(),
+        "cover" => track.cover.clone(),
         _ => unreachable!(),
     })
 }

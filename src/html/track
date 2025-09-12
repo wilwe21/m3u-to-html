@@ -1,4 +1,7 @@
 		<div class="trackHTML">
+			<div class="cover">
+				<img class="cover" src="{$cover}" />
+			</div>
 			<div class="divine">
 				<div class="albumHTML bottom">
 					<a class="nonclick">{$album} {$tracknumber}</a>

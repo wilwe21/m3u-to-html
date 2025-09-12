@@ -61,7 +61,9 @@ fn afterBox(mbox: gtk::Box, file: gtk::gio::File, path: PathBuf) {
     for s in list {
         if s != "" {
             let h = logic::Track::new(s.to_string().into());
-            finList.push(h);
+            if let Some(hrt) = h{
+                finList.push(hrt);
+            }
         }
     }
     let scrollBox = gtk::ListBox::new();

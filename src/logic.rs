@@ -1,7 +1,11 @@
-use std::{fs, path::{Path, PathBuf}};
+use std::{path::{Path, PathBuf}};
 
 use gtk::prelude::*;
 use lofty::{file::TaggedFileExt, tag::Accessor};
+
+use quick_xml::Reader;
+use quick_xml::events::{Event, BytesStart};
+use tokio::runtime::Runtime;
 
 use crate::parser;
 
@@ -12,15 +16,17 @@ pub struct Track {
     pub album: String,
     pub tracknum: String,
     pub maxtracknum: String,
+    pub cover: String,
    }
 
 impl Track {
-    pub fn new(path: PathBuf) -> Self {
+    pub fn new(path: PathBuf) -> Option<Self> {
         let mut art = "Unknown Artist".to_string();
         let mut tit = "Unknown Title".to_string();
-        let mut alb = "Unknown Album".to_string();
+        let mut alb = "Single".to_string();
         let mut trn = "".to_string();
         let mut mtrn = "".to_string();
+        let mut cov = "https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47".to_string();
         match lofty::read_from_path(path) {
         Ok(tagged_file) => {
             if let Some(tag) = tagged_file.primary_tag() {
@@ -47,13 +53,35 @@ impl Track {
             eprintln!("Failed to read file: {}", e);
         }
         }
-        return Self {
+        if art == "Unknown Artist".to_string() {
+            return None;
+        }
+        if tit == "Unknown Title".to_string() {
+            return None;
+        }
+        let mut cover_search_link = "http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=".to_string();
+        let key = parser::open_file(&Path::new("./html/token.txt")).expect("no token").replace("\n", "");
+        if alb == "Single".to_string() {
+            cover_search_link.push_str(&format!("{}&artist={}&album={}", key,art.replace("&", "%26"),tit.replace("&", "%26")));
+        } else {
+            cover_search_link.push_str(&format!("{}&artist={}&album={}", key,art.replace("&", "%26"),alb.replace("&", "%26")));
+        }
+        let request = req(&cover_search_link);
+        let rt = Runtime::new().unwrap();
+
+        let end_cov = rt.block_on(request);
+        if end_cov != "" {
+            cov = end_cov;
+        }
+
+        return Some(Self {
             title: tit,
             artist: art,
             album: alb,
             tracknum: trn,
             maxtracknum: mtrn,
-        }
+            cover: cov,
+        })
     }
     pub fn genBox(&self) -> gtk::Box {
         let trackBox = gtk::Box::new(gtk::Orientation::Horizontal, 1);
@@ -101,5 +129,44 @@ impl Track {
             }
         }
         return output;
+    }
+}
+async fn req(url: &str) -> String {
+    let request = reqwest::get(url).await.expect("sas").text().await.expect("sas");
+
+    let mut album_art_url: Option<String> = None;
+
+    let mut reader = Reader::from_str(&request);
+
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(e)) if e.name() == quick_xml::name::QName(b"image") => {
+                let mut size_attr = None;
+                for a in e.attributes() {
+                    let attr = a.unwrap();
+                    if attr.key == quick_xml::name::QName(b"size") {
+                        size_attr = Some(String::from_utf8(attr.value.into_owned()).unwrap());
+                    }
+                }
+
+                // Get the text content of the <image> tag
+                let text = reader.read_text(e.name()).unwrap();
+
+                if let Some(size) = size_attr {
+                    if size == "large" {
+                        album_art_url = Some(text.to_string());
+                    }
+                }
+            },
+            Ok(Event::Eof) => break, // Exit loop when EOF is reached
+            _ => (), // Ignore other events
+        }
+    }
+
+    if let Some(url) = album_art_url {
+        println!("loaded: {}", url);
+        return url.to_string();
+    } else {
+        return "".to_string();
     }
 }

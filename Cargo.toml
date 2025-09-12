@@ -7,4 +7,7 @@ edition = "2024"
 [dependencies]
 gtk = { version = "0.9.1", package = "gtk4", features = ["v4_6"] }
 lofty = "0.22.2"
+quick-xml = "0.38.3"
+reqwest = "0.12.23"
 thiserror = "2.0.16"
+tokio = { version = "1.47.1", features = ["full"] }
