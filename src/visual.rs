@@ -1,53 +1,40 @@
-use std::{fs::{self, File}, io::{Read, Write}, path::{Path, PathBuf}};
+use std::{fs::{self, File}, io::{Read, Write}, iter::Enumerate, path::{Path, PathBuf}, time::Duration};
 
-use gtk::{glib::property::PropertyGet, prelude::*, ResponseType};
+use gtk::{ResponseType, gio::ffi::GApplication, glib::property::PropertyGet, prelude::*};
+use sqlx::prelude::*;
+use tokio::runtime::Runtime;
+use std::sync::Mutex;
 
-use crate::{logic, parser};
+use crate::{logic, main, parser, window, buttons};
 
-pub fn wind() -> gtk::Box {
+static TrackList: Mutex<Vec<logic::Track>> = Mutex::new(vec!());
+
+pub fn set_TrackList(tracks: Vec<logic::Track>) {
+    TrackList.lock().unwrap().clear();
+    for t in tracks.clone() {
+        TrackList.lock().unwrap().push(t);
+    }
+}
+
+pub fn get_TrackList() -> Vec<logic::Track> {
+    return TrackList.lock().unwrap().to_vec();
+}
+
+
+pub fn wind(app: &gtk::Application) -> gtk::Box {
     let mainBox = gtk::Box::new(gtk::Orientation::Vertical, 1);
-    let button = fileButton(mainBox.clone());
+    let button = buttons::fileButton(&app.clone(), mainBox.clone());
+    let dbbutton = buttons::dbButton(&app.clone(),mainBox.clone());
     mainBox.append(&button);
+    mainBox.append(&dbbutton);
     return mainBox;
 }
 
-fn fileButton(mBox: gtk::Box) -> gtk::Button {
-    let button = gtk::Button::builder()
-        .label("Choose File")
-        .build();
-    let filter = gtk::FileFilter::new();
-    filter.add_mime_type("audio/x-mpegurl");
-    let f = gtk::FileChooserDialog::builder()
-        .title("Choose m3u file")
-        .filter(&filter)
-        .action(gtk::FileChooserAction::Open)
-        .build();
-    f.add_buttons(&[("Cancel", ResponseType::Cancel), ("Open", ResponseType::Accept)]);
-    button.connect_clicked(move |_| {
-        f.show();
-        let mboxclone = mBox.clone();
-        f.connect_response(move |dialog, response| {
-            if response == ResponseType::Accept {
-                if let Some(file) = dialog.file() {
-                    if let Some(path_buf) = file.path() {
-                        println!("Selected file: {:?}", path_buf.display());
-                        afterBox(mboxclone.clone(), file, path_buf);
-                    } else {
-                        println!("Could not get path from GFile.");
-                    }
-                }
-            }
-            dialog.hide();
-        });
-    });
-    return button;
-}
-
-fn afterBox(mbox: gtk::Box, file: gtk::gio::File, path: PathBuf) {
+pub fn afterBox(app: &gtk::Application, mbox: gtk::Box, file: gtk::gio::File, path: PathBuf) {
     while let Some(child) = mbox.first_child() {
         mbox.remove(&child);
     }
-    let button = fileButton(mbox.clone());
+    let button = buttons::fileButton(&app.clone(),mbox.clone());
     mbox.append(&button);
     let mut filename = String::new();
     if let Some(name) = path.file_name() {
@@ -66,6 +53,7 @@ fn afterBox(mbox: gtk::Box, file: gtk::gio::File, path: PathBuf) {
             }
         }
     }
+    set_TrackList(finList.clone());
     let scrollBox = gtk::ListBox::new();
     for t in &finList {
         let tr_box = t.genBox();
@@ -76,6 +64,8 @@ fn afterBox(mbox: gtk::Box, file: gtk::gio::File, path: PathBuf) {
         .vexpand(true)
         .build();
     mbox.append(&scroll);
+    let getcov = buttons::getCoversButton(&app.clone());
+    mbox.append(&getcov);
     let create = gtk::Button::builder()
         .label("Create")
         .build();
@@ -98,11 +88,12 @@ fn afterBox(mbox: gtk::Box, file: gtk::gio::File, path: PathBuf) {
         end.push_str(&header);
         let tail = include_str!("./html/tail");
         end.push_str(&top);
-        for el in &finList {
+        for el in &get_TrackList() {
             end.push_str(&el.getHTML());
         }
         end.push_str(&tail);
         gen_output(&end, &filename);
+        println!("[log] created");
     });
     mbox.append(&create);
 }
@@ -113,4 +104,26 @@ fn gen_output(end: &str, filename: &str) {
         Ok(mut o) => {o.write(end.as_bytes());},
         _ => {},
     }
+}
+
+pub fn coverLoading(app: &gtk::Application) -> (gtk::ProgressBar, gtk::Window) {
+    let mbox = gtk::Box::builder().orientation(gtk::Orientation::Vertical).build();    
+    let lab = gtk::Label::new(Some("Loaging Covers"));
+    mbox.append(&lab);
+    let bind = app.windows();
+    let parrent = bind.get(0).unwrap();
+    let window = gtk::Window::builder()
+        .title("Loading Covers")
+        .modal(true)
+        .application(app)
+        .destroy_with_parent(true)
+        .visible(false)
+        .transient_for(parrent)
+        .build();
+    window.set_child(Some(&mbox));
+    let progress = gtk::ProgressBar::new();
+    progress.set_hexpand(true);
+    progress.set_vexpand(true);
+    mbox.append(&progress);
+    return (progress, window);
 }

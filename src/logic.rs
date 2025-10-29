@@ -1,13 +1,15 @@
-use std::{path::{Path, PathBuf}};
+use core::f64;
+use std::{ops::{Add, Mul}, path::{Path, PathBuf}, thread::sleep, time::Duration};
 
 use gtk::prelude::*;
 use lofty::{file::TaggedFileExt, tag::Accessor};
+use std::sync::Mutex;
 
 use quick_xml::Reader;
 use quick_xml::events::{Event, BytesStart};
 use tokio::runtime::Runtime;
 
-use crate::parser;
+use crate::{parser, visual};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Track {
@@ -17,7 +19,7 @@ pub struct Track {
     pub tracknum: String,
     pub maxtracknum: String,
     pub cover: String,
-   }
+}
 
 impl Track {
     pub fn new(path: PathBuf) -> Option<Self> {
@@ -26,7 +28,7 @@ impl Track {
         let mut alb = "Single".to_string();
         let mut trn = "".to_string();
         let mut mtrn = "".to_string();
-        let mut cov = "https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47".to_string();
+        let cov = "https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47".to_string();
         match lofty::read_from_path(path) {
         Ok(tagged_file) => {
             if let Some(tag) = tagged_file.primary_tag() {
@@ -58,20 +60,6 @@ impl Track {
         }
         if tit == "Unknown Title".to_string() {
             return None;
-        }
-        let mut cover_search_link = "http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=".to_string();
-        let key = parser::open_file(&Path::new("./html/token.txt")).expect("no token").replace("\n", "");
-        if alb == "Single".to_string() {
-            cover_search_link.push_str(&format!("{}&artist={}&album={}", key,art.replace("&", "%26"),tit.replace("&", "%26")));
-        } else {
-            cover_search_link.push_str(&format!("{}&artist={}&album={}", key,art.replace("&", "%26"),alb.replace("&", "%26")));
-        }
-        let request = req(&cover_search_link);
-        let rt = Runtime::new().unwrap();
-
-        let end_cov = rt.block_on(request);
-        if end_cov != "" {
-            cov = end_cov;
         }
 
         return Some(Self {
@@ -113,6 +101,9 @@ impl Track {
         divide2.append(&artist);
         return trackBox;
     }
+    pub fn changeCover(&mut self, cover: &str) {
+        self.cover = cover.to_string();
+    }
 
     pub fn getHTML(&self) -> String {
         let template: String = match parser::open_file(&Path::new("./html/track")) {
@@ -131,8 +122,30 @@ impl Track {
         return output;
     }
 }
-async fn req(url: &str) -> String {
-    let request = reqwest::get(url).await.expect("sas").text().await.expect("sas");
+
+pub fn covers(track: &mut Track) -> &mut Track {
+    let mut cover_search_link = "http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=".to_string();
+    let key = parser::open_file(&Path::new("./html/token.txt")).expect("no token").replace("\n", "");
+    if track.album == "Single".to_string() {
+        cover_search_link.push_str(&format!("{}&artist={}&album={}", key,track.artist.replace("&", "%26"),track.title.replace("&", "%26")));
+    } else {
+        cover_search_link.push_str(&format!("{}&artist={}&album={}", key,track.artist.replace("&", "%26"),track.album.replace("&", "%26")));
+    }
+    let request = req(&cover_search_link);
+    let rt = Runtime::new().unwrap();
+
+    let end_cov = rt.block_on(request);
+    if end_cov != "" {
+        track.changeCover(&end_cov);
+    }
+    if track.cover != end_cov {
+        println!("[log] Default cover");
+    }
+    return track;
+}
+
+pub async fn req(url: &str) -> String {
+    let request = reqwest::get(url).await.expect("Request Timeout").text().await.expect("Wrong Request");
 
     let mut album_art_url: Option<String> = None;
 
@@ -164,7 +177,6 @@ async fn req(url: &str) -> String {
     }
 
     if let Some(url) = album_art_url {
-        println!("loaded: {}", url);
         return url.to_string();
     } else {
         return "".to_string();

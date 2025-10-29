@@ -5,9 +5,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-channel = "2.5.0"
 gtk = { version = "0.9.1", package = "gtk4", features = ["v4_6"] }
 lofty = "0.22.2"
 quick-xml = "0.38.3"
 reqwest = "0.12.23"
+sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio-rustls"] }
 thiserror = "2.0.16"
 tokio = { version = "1.47.1", features = ["full"] }

@@ -2,8 +2,10 @@ use gtk::prelude::*;
 use gtk::gdk;
 use crate::visual::wind;
 
+pub const id: &str = "com.github.wilwe21.m3utohtml";
+
 fn on_active(app: &gtk::Application) {
-    let mainBox = wind();
+    let mainBox = wind(&app.clone());
     let window = gtk::ApplicationWindow::builder()
         .title("m3u to html")
         .application(app)
@@ -14,9 +16,7 @@ fn on_active(app: &gtk::Application) {
 }
 
 pub fn load() {
-    let app = gtk::Application::builder()
-        .application_id("com.github.wilwe21.m3utohtml")
-        .build();
+    let app = gtk::Application::builder().application_id(id).build(); 
     app.connect_activate(on_active);
     app.run();
 }

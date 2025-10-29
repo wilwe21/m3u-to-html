@@ -19,7 +19,10 @@
 					<a class="soundcloud" target="_blank" href="https://soundcloud.com/search?q={$track} {$artist}"><img src="https://a-v2.sndcdn.com/assets/images/sc-icons/favicon-2cadd14bdb.ico" alt="SoundCloud"/></a>
 					<a class="spotify" target="_blank" href="https://open.spotify.com/search/{$track} {$artist}"><img src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt="Spotify"/></a>
 					<a class="youtube" target="_blank" href="https://www.youtube.com/results?search_query={$track} {$artist}"><img src="https://m.youtube.com/static/favicon.ico" alt="Youtube"/></a>
+					<a class="youtubeMusic" target="_blank" href="https://music.youtube.com/search?q={$track} {$artist}"><img src="https://music.youtube.com/img/favicon_32.png" alt="Youtube Music"/></a>
 					<a class="bandcamp" target="_blank" href="https://bandcamp.com/search?q={$track} {$artist}"><img src="https://s4.bcbits.com/client-bundle/1/PageLayout_1/favicon-78ff127104384a042453aca8d73be7dc.static/favicon/favicon-32x32.png" alt="Bandcamp"></a>
+					<a class="apple" target="_blank" href="https://music.apple.com/pl/search?term={$track} {$artist}"><img src="https://music.apple.com/assets/favicon/favicon-32.png" alt="Apple Music"></a>
+					<a class="amazon" target="_blank" href="https://music.amazon.com/search/{$track} {$artist}"><img class="amazon" src="https://m.media-amazon.com/images/G/01/music/logo/1.0/smile_256x256.png" alt="Amazon Music"></a>
 					<a class="lastfm" target="_blank" href="https://www.last.fm/search?q={$track} {$artist}"><img src="https://www.last.fm/static/images/favicon.702b239b6194.ico" alt="LastFM"/></a>
 				</div>
 				</div>

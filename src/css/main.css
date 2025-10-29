@@ -78,6 +78,11 @@
 	padding-right: var(--paddingdos);
 }
 
+.amazon {
+	max-height: 32px;
+	max-width: 32px;
+}
+
 .nonclick {
 	all: unset;
 }
