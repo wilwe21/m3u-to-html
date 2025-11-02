@@ -1,9 +1,20 @@
-use std::{clone, thread::sleep, time::Duration};
+use std::{clone, fs, path::PathBuf, str::FromStr, thread::sleep, time::Duration};
 
 use gtk::{ResponseType, gio::LocalTask, glib::value, prelude::*};
+use sqlx::Database;
 use tokio::runtime::Runtime;
 
-use crate::{logic::{self, Track, covers}, visual::{self, wind}};
+use crate::{database, logic::{self, Track, covers}, visual::{self, wind}};
+
+pub fn importButtons(app: &gtk::Application, mBox: gtk::Box) -> gtk::Box {
+    let horibox = gtk::Box::new(gtk::Orientation::Horizontal, 1);
+    horibox.set_hexpand(true);
+    let fb = fileButton(&app.clone(), mBox.clone());
+    let vlcdbb = dbButton(&app.clone(), mBox.clone());
+    horibox.append(&fb);
+    horibox.append(&vlcdbb);
+    return horibox;
+}
 
 pub fn fileButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
     let button = gtk::Button::builder()
@@ -27,7 +38,8 @@ pub fn fileButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
                 if let Some(file) = dialog.file() {
                     if let Some(path_buf) = file.path() {
                         println!("Selected file: {:?}", path_buf.display());
-                        visual::afterBox(&val.clone(),mboxclone.clone(), file, path_buf);
+                        let (tra, pl) = read_file(path_buf);
+                        visual::afterBox(&val.clone(),mboxclone.clone(), pl, tra);
                     } else {
                         println!("Could not get path from GFile.");
                     }
@@ -39,6 +51,25 @@ pub fn fileButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
     return button;
 }
 
+fn read_file(path: PathBuf) -> (String, Vec<Track>) {
+    let mut filename = String::new();
+    if let Some(name) = path.file_name() {
+        filename = name.to_os_string().into_string().unwrap();
+    }
+    let f = fs::read_to_string(&path).expect("wrong file");
+    let list = f.split("\n");
+    let mut finList = vec!();
+    for s in list {
+        if s != "" {
+            let h = logic::Track::new(s.to_string().into());
+            if let Some(hrt) = h{
+                finList.push(hrt);
+            }
+        }
+    }
+    return (filename, finList);
+}
+
 pub fn dbButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
     let button = gtk::Button::builder()
         .label("Choose VLC DB")
@@ -48,25 +79,20 @@ pub fn dbButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
         .action(gtk::FileChooserAction::Open)
         .build();
     f.add_buttons(&[("Cancel", ResponseType::Cancel), ("Open", ResponseType::Accept)]);
+    let appclone = app.clone();
     button.connect_clicked(move |_| {
         f.show();
         let mboxclone = mBox.clone();
+        let val = appclone.clone();
         f.connect_response(move |dialog, response| {
             if response == ResponseType::Accept {
                 if let Some(file) = dialog.file() {
                     if let Some(path_buf) = file.path() {
-                        let pa = format!("sqlite:{}", path_buf.display());
-                        println!("{}", &pa);
-                        let sql = sqlx::sqlite::SqlitePoolOptions::new()
-                            .max_connections(5)
-                            .min_connections(1)
-                            .acquire_timeout(Duration::from_secs(3))
-                            .connect(&pa);
+                        let request = database::dbRequest(path_buf.display().to_string(), database::dbtype::Vlc);
                         let rt = Runtime::new().unwrap();
-                        let fut_sql = rt.block_on(sql);
-                        if let Ok(s) = fut_sql {
-                            println!("{:?}", s);
-                        }
+
+                        let (pl, tra) = rt.block_on(request).unwrap();
+                        visual::afterBox(&val.clone(),mboxclone.clone(), pl, tra);
                     } else {
                         println!("Could not get path from GFile.");
                     }

@@ -5,7 +5,7 @@ use sqlx::prelude::*;
 use tokio::runtime::Runtime;
 use std::sync::Mutex;
 
-use crate::{logic, main, parser, window, buttons};
+use crate::{buttons, logic::{self, Track}, main, parser, window};
 
 static TrackList: Mutex<Vec<logic::Track>> = Mutex::new(vec!());
 
@@ -23,39 +23,22 @@ pub fn get_TrackList() -> Vec<logic::Track> {
 
 pub fn wind(app: &gtk::Application) -> gtk::Box {
     let mainBox = gtk::Box::new(gtk::Orientation::Vertical, 1);
-    let button = buttons::fileButton(&app.clone(), mainBox.clone());
-    let dbbutton = buttons::dbButton(&app.clone(),mainBox.clone());
-    mainBox.append(&button);
-    mainBox.append(&dbbutton);
+    let buttons = buttons::importButtons(&app.clone(), mainBox.clone());
+    mainBox.append(&buttons);
     return mainBox;
 }
 
-pub fn afterBox(app: &gtk::Application, mbox: gtk::Box, file: gtk::gio::File, path: PathBuf) {
+pub fn afterBox(app: &gtk::Application, mbox: gtk::Box, tracks: Vec<Track>, playlistname: String) {
     while let Some(child) = mbox.first_child() {
         mbox.remove(&child);
     }
-    let button = buttons::fileButton(&app.clone(),mbox.clone());
+    let button = buttons::importButtons(&app.clone(),mbox.clone());
     mbox.append(&button);
-    let mut filename = String::new();
-    if let Some(name) = path.file_name() {
-        filename = name.to_os_string().into_string().unwrap();
-        let fileName = gtk::Label::new(Some(&filename));
-        mbox.append(&fileName);
-    }
-    let f = fs::read_to_string(&path).expect("wrong file");
-    let list = f.split("\n");
-    let mut finList = vec!();
-    for s in list {
-        if s != "" {
-            let h = logic::Track::new(s.to_string().into());
-            if let Some(hrt) = h{
-                finList.push(hrt);
-            }
-        }
-    }
-    set_TrackList(finList.clone());
+    let play = gtk::Label::new(Some(&playlistname));
+    mbox.append(&play);
+    set_TrackList(tracks.clone());
     let scrollBox = gtk::ListBox::new();
-    for t in &finList {
+    for t in &tracks {
         let tr_box = t.genBox();
         scrollBox.append(&tr_box);
     }
@@ -76,7 +59,7 @@ pub fn afterBox(app: &gtk::Application, mbox: gtk::Box, file: gtk::gio::File, pa
         };
         let mut top = String::new();
         for (index, line) in top_template.lines().enumerate() {
-            match parser::parse_line_playlist(line, &filename) {
+            match parser::parse_line_playlist(line, &playlistname) {
                 Ok(line) => top.push_str(&line),
                 Err(err) => {
                     eprint!("Error in line {}: {}", index+1, err);
@@ -92,7 +75,7 @@ pub fn afterBox(app: &gtk::Application, mbox: gtk::Box, file: gtk::gio::File, pa
             end.push_str(&el.getHTML());
         }
         end.push_str(&tail);
-        gen_output(&end, &filename);
+        gen_output(&end, &playlistname);
         println!("[log] created");
     });
     mbox.append(&create);
@@ -107,16 +90,20 @@ fn gen_output(end: &str, filename: &str) {
 }
 
 pub fn coverLoading(app: &gtk::Application) -> (gtk::ProgressBar, gtk::Window) {
-    let mbox = gtk::Box::builder().orientation(gtk::Orientation::Vertical).build();    
+    let mbox = gtk::CenterBox::new();
+    mbox.set_orientation(gtk::Orientation::Vertical);
     let lab = gtk::Label::new(Some("Loaging Covers"));
-    mbox.append(&lab);
+    mbox.set_start_widget(Some(&lab));
     let bind = app.windows();
     let parrent = bind.get(0).unwrap();
     let window = gtk::Window::builder()
+        .width_request(380)
+        .height_request(150)
         .title("Loading Covers")
         .modal(true)
         .application(app)
         .destroy_with_parent(true)
+        .resizable(false)
         .visible(false)
         .transient_for(parrent)
         .build();
@@ -124,6 +111,7 @@ pub fn coverLoading(app: &gtk::Application) -> (gtk::ProgressBar, gtk::Window) {
     let progress = gtk::ProgressBar::new();
     progress.set_hexpand(true);
     progress.set_vexpand(true);
-    mbox.append(&progress);
+    progress.set_margin_top(90);
+    mbox.set_center_widget(Some(&progress));
     return (progress, window);
 }
