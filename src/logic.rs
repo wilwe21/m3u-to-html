@@ -199,10 +199,19 @@ pub fn generate(playlistname: &str) {
     }
     let mut end = String::new();
     let head_loc = format!("{}/header", args.html_path.display());
-    let header: String = match parser::open_file(&Path::new(&head_loc)) {
+    let header_template: String = match parser::open_file(&Path::new(&head_loc)) {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./html/header")),
     };
+    let mut header = String::new();
+    for (index, line) in header_template.lines().enumerate() {
+        match parser::parse_line_playlist(line, &playlistname) {
+            Ok(line) => header.push_str(&line),
+            Err(err) => {
+                eprint!("Error in line {}: {}", index+1, err);
+            }
+        }
+    }
     end.push_str(&header);
     let tail_loc = format!("{}/tai;", args.html_path.display());
     let tail: String = match parser::open_file(&Path::new(&tail_loc)) {

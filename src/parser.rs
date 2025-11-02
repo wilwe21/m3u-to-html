@@ -1,6 +1,6 @@
 use std::{fs::File, io::{self, Read}, path::Path};
 
-use crate::{error::ConfigError, logic::Track};
+use crate::{error::ConfigError, get_Arguments, logic::Track};
 
 pub fn open_file(path: &Path) -> Result<String, io::Error> {
     let mut file = File::open(path)?;
@@ -165,13 +165,21 @@ fn replace_var(key: &str, track: &Track) -> Result<String, ConfigError> {
 }
 
 fn replace_var_playlist(key: &str, playlist: &str) -> Result<String, ConfigError> {
-    if key != "playlist" {
+    if key == "playlist" || key == "css" {
+        let args = get_Arguments();
+        let css_loc = format!("{}", args.css_path.display());
+        let css: String = match open_file(&Path::new(&css_loc)) {
+            Ok(file) => file,
+            Err(_) => String::from(include_str!("./css/main.css")),
+        };
+
+        Ok(match key {
+            "playlist" => playlist.to_string().clone(),
+            "css" => css.clone(),
+            _ => unreachable!(),
+        })
+    } else {
         return Err(ConfigError::UnknownVariable(String::from(key)));
     }
-
-    Ok(match key {
-        "playlist" => playlist.to_string().clone(),
-        _ => unreachable!(),
-    })
 }
 
