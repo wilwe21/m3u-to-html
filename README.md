@@ -4,5 +4,5 @@ This program converts playlists into html with many streaming links
 ## Features
 
 -  **m3u to html** - Vonverts .m3u files into playlist
--  **VLC database convert** - WIP
+-  **VLC database convert** - working for fav (playlist in future)
 -  **Fetching covers** - Geting covers from LastFm
