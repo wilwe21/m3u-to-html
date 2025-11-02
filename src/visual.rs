@@ -1,11 +1,9 @@
-use std::{fs::{self, File}, io::{Read, Write}, iter::Enumerate, path::{Path, PathBuf}, time::Duration};
+use std::{fs::File, io::Write, path::Path};
 
-use gtk::{ResponseType, gio::ffi::GApplication, glib::property::PropertyGet, prelude::*};
-use sqlx::prelude::*;
-use tokio::runtime::Runtime;
+use gtk::{prelude::*};
 use std::sync::Mutex;
 
-use crate::{buttons, logic::{self, Track}, main, parser, window};
+use crate::{buttons, logic::{self, Track}, parser};
 
 static TrackList: Mutex<Vec<logic::Track>> = Mutex::new(vec!());
 
@@ -53,40 +51,9 @@ pub fn afterBox(app: &gtk::Application, mbox: gtk::Box, tracks: Vec<Track>, play
         .label("Create")
         .build();
     create.connect_clicked(move |_| {
-        let top_template: String = match parser::open_file(&Path::new("./html/playlist")) {
-            Ok(file) => file,
-            Err(_) => String::from(include_str!("./html/playlist")),
-        };
-        let mut top = String::new();
-        for (index, line) in top_template.lines().enumerate() {
-            match parser::parse_line_playlist(line, &playlistname) {
-                Ok(line) => top.push_str(&line),
-                Err(err) => {
-                    eprint!("Error in line {}: {}", index+1, err);
-                }
-            }
-        }
-        let mut end = String::new();
-        let header = include_str!("./html/header");
-        end.push_str(&header);
-        let tail = include_str!("./html/tail");
-        end.push_str(&top);
-        for el in &get_TrackList() {
-            end.push_str(&el.getHTML());
-        }
-        end.push_str(&tail);
-        gen_output(&end, &playlistname);
-        println!("[log] created");
+        logic::generate(&playlistname.clone());
     });
     mbox.append(&create);
-}
-
-fn gen_output(end: &str, filename: &str) {
-    let mut output = File::create(format!("{}_playlist.html", filename));
-    match output {
-        Ok(mut o) => {o.write(end.as_bytes());},
-        _ => {},
-    }
 }
 
 pub fn coverLoading(app: &gtk::Application) -> (gtk::ProgressBar, gtk::Window) {

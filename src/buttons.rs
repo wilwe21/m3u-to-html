@@ -51,7 +51,7 @@ pub fn fileButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
     return button;
 }
 
-fn read_file(path: PathBuf) -> (String, Vec<Track>) {
+pub fn read_file(path: PathBuf) -> (String, Vec<Track>) {
     let mut filename = String::new();
     if let Some(name) = path.file_name() {
         filename = name.to_os_string().into_string().unwrap();
@@ -68,6 +68,13 @@ fn read_file(path: PathBuf) -> (String, Vec<Track>) {
         }
     }
     return (filename, finList);
+}
+
+pub fn read_db(path: PathBuf) -> (Vec<Track>, String) {
+    let request = database::dbRequest(path.display().to_string(), database::dbtype::Vlc);
+    let rt = Runtime::new().unwrap();
+
+    return rt.block_on(request).unwrap();
 }
 
 pub fn dbButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
@@ -88,10 +95,7 @@ pub fn dbButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
             if response == ResponseType::Accept {
                 if let Some(file) = dialog.file() {
                     if let Some(path_buf) = file.path() {
-                        let request = database::dbRequest(path_buf.display().to_string(), database::dbtype::Vlc);
-                        let rt = Runtime::new().unwrap();
-
-                        let (pl, tra) = rt.block_on(request).unwrap();
+                        let (pl, tra) = read_db(path_buf);
                         visual::afterBox(&val.clone(),mboxclone.clone(), pl, tra);
                     } else {
                         println!("Could not get path from GFile.");

@@ -1,15 +1,13 @@
-use core::f64;
-use std::{ops::{Add, Mul}, path::{Path, PathBuf}, thread::sleep, time::Duration};
+use std::{fs::File, io::Write, path::{Path, PathBuf}};
 
 use gtk::prelude::*;
 use lofty::{file::TaggedFileExt, tag::Accessor};
-use std::sync::Mutex;
 
 use quick_xml::Reader;
-use quick_xml::events::{Event, BytesStart};
+use quick_xml::events::{Event};
 use tokio::runtime::Runtime;
 
-use crate::{parser, visual};
+use crate::{get_Arguments, parser, visual::get_TrackList};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Track {
@@ -180,5 +178,50 @@ pub async fn req(url: &str) -> String {
         return url.to_string();
     } else {
         return "".to_string();
+    }
+}
+
+pub fn generate(playlistname: &str) {
+    let args = get_Arguments();
+    let top_loc = format!("{}/playlist", args.html_path.display());
+    let top_template: String = match parser::open_file(&Path::new(&top_loc)) {
+        Ok(file) => file,
+        Err(_) => String::from(include_str!("./html/playlist")),
+    };
+    let mut top = String::new();
+    for (index, line) in top_template.lines().enumerate() {
+        match parser::parse_line_playlist(line, &playlistname) {
+            Ok(line) => top.push_str(&line),
+            Err(err) => {
+                eprint!("Error in line {}: {}", index+1, err);
+            }
+        }
+    }
+    let mut end = String::new();
+    let head_loc = format!("{}/header", args.html_path.display());
+    let header: String = match parser::open_file(&Path::new(&head_loc)) {
+        Ok(file) => file,
+        Err(_) => String::from(include_str!("./html/header")),
+    };
+    end.push_str(&header);
+    let tail_loc = format!("{}/tai;", args.html_path.display());
+    let tail: String = match parser::open_file(&Path::new(&tail_loc)) {
+        Ok(file) => file,
+        Err(_) => String::from(include_str!("./html/tail")),
+    };
+    end.push_str(&top);
+    for el in &get_TrackList() {
+        end.push_str(&el.getHTML());
+    }
+    end.push_str(&tail);
+    gen_output(&end, &playlistname);
+    println!("[log] created");
+}
+
+fn gen_output(end: &str, filename: &str) {
+    let mut output = File::create(format!("{}_playlist.html", filename));
+    match output {
+        Ok(mut o) => {o.write(end.as_bytes());},
+        _ => {},
     }
 }

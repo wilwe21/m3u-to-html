@@ -1,11 +1,12 @@
 cargo-features = ["edition2024"]
 [package]
 name = "m3uHtml"
-version = "0.1.0"
+version = "1.1.0"
 edition = "2024"
 
 [dependencies]
 async-channel = "2.5.0"
+clap = { version = "4.5.51", features = ["derive"] }
 gtk = { version = "0.9.1", package = "gtk4", features = ["v4_6"] }
 lofty = "0.22.2"
 quick-xml = "0.38.3"
