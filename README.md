@@ -7,3 +7,8 @@ This program converts playlists into html with many streaming links
 -  **VLC database convert** - working for fav (playlist in future)
 -  **Cli support** - working in terminal
 -  **Fetching covers** - Geting covers from LastFm
+
+## TODO
+
+- **VLC playlist** - option to choose playlist not only favorite
+- **Generic Overview** - Overview stats like most artists and others
