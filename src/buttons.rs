@@ -155,3 +155,19 @@ pub fn getCoversButton(app: &gtk::Application) -> gtk::Button {
     return button;
 }
 
+pub fn gencover(tracks: Vec<Track>, print: bool) -> Vec<Track> {
+    let mut new = vec!();
+    let size = tracks.len();
+    for (n, mut t) in &mut tracks.clone().into_iter().enumerate() {
+        let nt = logic::covers(&mut t);
+        new.push(nt.clone());
+        if print {
+            if n > 0 {
+                println!("\x1B[1A{}/{}", n+1, size);
+            } else {
+                println!("{}/{}", n+1, size);
+            }
+        }
+    }
+    return new;
+}

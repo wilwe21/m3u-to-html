@@ -123,7 +123,10 @@ impl Track {
 
 pub fn covers(track: &mut Track) -> &mut Track {
     let mut cover_search_link = "http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=".to_string();
-    let key = parser::open_file(&Path::new("./html/token.txt")).expect("no token").replace("\n", "");
+    let key = match parser::open_file(&Path::new("./html/token.txt")) {
+        Ok(file) => file,
+        Err(_) => String::from(include_str!("./html/token.txt"))
+    }.replace("\n", "");
     if track.album == "Single".to_string() {
         cover_search_link.push_str(&format!("{}&artist={}&album={}", key,track.artist.replace("&", "%26"),track.title.replace("&", "%26")));
     } else {

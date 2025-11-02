@@ -52,7 +52,7 @@ fn main() {
     let args = Args::parse();
     set_Arguments(args.clone());
     if let Some(f) = args.input {
-        openfile(f.clone(), args.vlc.clone());
+        openfile(f.clone(), args.vlc.clone(), args.cover.clone());
         return;
     } else {
         window::load();
