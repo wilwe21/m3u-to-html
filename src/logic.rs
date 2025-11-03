@@ -69,6 +69,18 @@ impl Track {
             cover: cov,
         })
     }
+
+    pub fn example() -> Self {
+        let cov = "https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47".to_string();
+        return Self {
+            title: "{$title}".to_string(),
+            artist: "{$artist}".to_string(),
+            album: "{$album}".to_string(),
+            tracknum: "{$tracknumber}".to_string(),
+            maxtracknum: "".to_string(),
+            cover: cov,
+        }
+    }
     pub fn genBox(&self) -> gtk::Box {
         let trackBox = gtk::Box::new(gtk::Orientation::Horizontal, 1);
         trackBox.add_css_class("track");

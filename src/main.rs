@@ -2,6 +2,8 @@ use std::{path::{Path, PathBuf}, sync::Mutex};
 use clap::{Arg, Parser, builder::Str};
 
 use cli::openfile;
+use logic::generate;
+use visual::set_TrackList;
 
 mod window;
 mod visual;
@@ -16,6 +18,10 @@ mod cli;
 #[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 pub struct Args {
+    /// generate preview in html_path
+    #[arg(short, long, action = clap::ArgAction::SetTrue)]
+    preview: bool,
+
     /// use VLC database for cli mode
     #[arg(short, long, action = clap::ArgAction::SetTrue)]
     vlc: bool,
@@ -51,7 +57,11 @@ pub fn get_Arguments() -> Args {
 fn main() {
     let args = Args::parse();
     set_Arguments(args.clone());
-    if let Some(f) = args.input {
+    if args.preview {
+        let prevList = vec!(logic::Track::example());
+        set_TrackList(prevList);
+        generate("{$playlistname}");
+    } else if let Some(f) = args.input {
         openfile(f.clone(), args.vlc.clone(), args.cover.clone());
         return;
     } else {

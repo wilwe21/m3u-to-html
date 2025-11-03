@@ -1,22 +1,112 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<link rel="stylesheet" href="../css/main.css">
+		<style>
+:root {
+	--accent: #CBA6F7;
+	--bg: #181825;
+	--fg: #CDD6F4;
+	--radii: 7px;
+	--padding: 3px;
+	--paddingdos: 6px;
+	
+	font-family: "Adwaita Sans";
+}
+
+.track {
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--padding);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	margin-right: 20px;
+}
+
+.trackHTML {
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--padding);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	padding-left: var(--padding);
+	padding-right: var(--padding);
+}
+.trackHTML {
+  display: flex; 
+	flex-direction: row;
+	margin-bottom: var(--padding);
+}
+
+.divine {
+	display: flex;
+	flex-grow: 1;
+	align-items: start;
+	flex-direction: column;
+}
+
+.divine2 {
+	display: flex;
+	flex-grow: 1;
+	align-items: end;
+	flex-direction: column-reverse;
+}
+.footer {
+	display: flex;
+	flex-direction: row-reverse;
+}
+.footer > a {
+	padding-left: var(--padding);
+}
+.playlist {
+	font-size: 28px;
+	padding: var(--padding);
+	margin-bottom: var(--padding);
+}
+
+.top {
+	display: flex;
+	flex-grow: 1;
+	flex-direction: column;
+	min-height: 50px;
+}
+
+.bottom {
+	display: flex;
+	flex-grow: 1;
+	flex-direction: column-reverse;
+	min-height: 50px;
+}
+.cover {
+	max-height: 128px;
+	max-width: 128px;
+	padding-right: var(--paddingdos);
+}
+
+.amazon {
+	max-height: 32px;
+	max-width: 32px;
+}
+
+.nonclick {
+	all: unset;
+}
+
+		</style>
 	</head>
 	<body>
 		<div class="playlist">
-			<b>{$playlist}</b>
+			<b>{$playlistname}</b>
 		</div>
-				<div class="trackHTML">
+		<div class="trackHTML">
 			<div class="cover">
 				<img class="cover" src="https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47" />
 			</div>
 			<div class="divine">
 				<div class="albumHTML bottom">
-					<a class="nonclick">{$album} {$tracknumber}</a>
+					<a class="nonclick">{$album} tracknumber: {$tracknumber}</a>
 				</div>
 				<div class="titleHTML top">
-					<a class="nonclick">{$track}</a>
+					<a class="nonclick">{$title}</a>
 				</div>
 			</div>
 			<div class="divine2">
@@ -25,14 +115,14 @@
 				</div>
 				<div class="top">
 				<div class="linksHTML">
-					<a class="soundcloud" target="_blank" href="https://soundcloud.com/search?q={$track} {$artist}"><img src="https://a-v2.sndcdn.com/assets/images/sc-icons/favicon-2cadd14bdb.ico" alt="SoundCloud"/></a>
-					<a class="spotify" target="_blank" href="https://open.spotify.com/search/{$track} {$artist}"><img src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt="Spotify"/></a>
-					<a class="youtube" target="_blank" href="https://www.youtube.com/results?search_query={$track} {$artist}"><img src="https://m.youtube.com/static/favicon.ico" alt="Youtube"/></a>
-					<a class="youtubeMusic" target="_blank" href="https://music.youtube.com/search?q={$track} {$artist}"><img src="https://music.youtube.com/img/favicon_32.png" alt="Youtube Music"/></a>
-					<a class="bandcamp" target="_blank" href="https://bandcamp.com/search?q={$track} {$artist}"><img src="https://s4.bcbits.com/client-bundle/1/PageLayout_1/favicon-78ff127104384a042453aca8d73be7dc.static/favicon/favicon-32x32.png" alt="Bandcamp"></a>
-					<a class="apple" target="_blank" href="https://music.apple.com/pl/search?term={$track} {$artist}"><img src="https://music.apple.com/assets/favicon/favicon-32.png" alt="Apple Music"></a>
-					<a class="amazon" target="_blank" href="https://music.amazon.com/search/{$track} {$artist}"><img class="amazon" src="https://m.media-amazon.com/images/G/01/music/logo/1.0/smile_256x256.png" alt="Amazon Music"></a>
-					<a class="lastfm" target="_blank" href="https://www.last.fm/search?q={$track} {$artist}"><img src="https://www.last.fm/static/images/favicon.702b239b6194.ico" alt="LastFM"/></a>
+					<a class="soundcloud" target="_blank" href="https://soundcloud.com/search?q={$title} {$artist}"><img src="https://a-v2.sndcdn.com/assets/images/sc-icons/favicon-2cadd14bdb.ico" alt="SoundCloud"/></a>
+					<a class="spotify" target="_blank" href="https://open.spotify.com/search/{$title} {$artist}"><img src="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png" alt="Spotify"/></a>
+					<a class="youtube" target="_blank" href="https://www.youtube.com/results?search_query={$title} {$artist}"><img src="https://m.youtube.com/static/favicon.ico" alt="Youtube"/></a>
+					<a class="youtubeMusic" target="_blank" href="https://music.youtube.com/search?q={$title} {$artist}"><img src="https://music.youtube.com/img/favicon_32.png" alt="Youtube Music"/></a>
+					<a class="bandcamp" target="_blank" href="https://bandcamp.com/search?q={$title} {$artist}"><img src="https://s4.bcbits.com/client-bundle/1/PageLayout_1/favicon-78ff127104384a042453aca8d73be7dc.static/favicon/favicon-32x32.png" alt="Bandcamp"></a>
+					<a class="apple" target="_blank" href="https://music.apple.com/pl/search?term={$title} {$artist}"><img src="https://music.apple.com/assets/favicon/favicon-32.png" alt="Apple Music"></a>
+					<a class="amazon" target="_blank" href="https://music.amazon.com/search/{$title} {$artist}"><img class="amazon" src="https://m.media-amazon.com/images/G/01/music/logo/1.0/smile_256x256.png" alt="Amazon Music"></a>
+					<a class="lastfm" target="_blank" href="https://www.last.fm/search?q={$title} {$artist}"><img src="https://www.last.fm/static/images/favicon.702b239b6194.ico" alt="LastFM"/></a>
 				</div>
 				</div>
 			</div>
