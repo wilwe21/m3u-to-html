@@ -70,8 +70,15 @@ pub fn read_file(path: PathBuf) -> (String, Vec<Track>) {
     return (filename, finList);
 }
 
-pub fn read_db(path: PathBuf) -> (Vec<Track>, String) {
-    let request = database::dbRequest(path.display().to_string(), database::dbtype::Vlc);
+pub fn read_db(path: PathBuf, t: database::dbtype, name: &str) -> (Vec<Track>, String) {
+    let request = database::dbRequest(path.display().to_string(), t, name);
+    let rt = Runtime::new().unwrap();
+
+    return rt.block_on(request).unwrap();
+}
+
+pub fn read_db_playlists(path: PathBuf, t: database::dbtype) -> Vec<String> {
+    let request = database::dbRequestPlaylists(path.display().to_string(), t);
     let rt = Runtime::new().unwrap();
 
     return rt.block_on(request).unwrap();
@@ -95,7 +102,7 @@ pub fn dbButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
             if response == ResponseType::Accept {
                 if let Some(file) = dialog.file() {
                     if let Some(path_buf) = file.path() {
-                        let (pl, tra) = read_db(path_buf);
+                        let (pl, tra) = read_db(path_buf, database::dbtype::Vlc, "favorite");
                         visual::afterBox(&val.clone(),mboxclone.clone(), pl, tra);
                     } else {
                         println!("Could not get path from GFile.");

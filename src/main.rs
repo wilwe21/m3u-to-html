@@ -23,8 +23,12 @@ pub struct Args {
     preview: bool,
 
     /// use VLC database for cli mode
-    #[arg(short, long, action = clap::ArgAction::SetTrue)]
-    vlc: bool,
+    #[arg(short, long)]
+    vlc: Option<String>,
+
+    /// show VLC playlists names cli mode
+    #[arg(short = 'P', long, action = clap::ArgAction::SetTrue)]
+    vlcplaylist: bool,
 
     /// generate covers for cli mode
     #[arg(short, long, action = clap::ArgAction::SetTrue)]
@@ -62,7 +66,7 @@ fn main() {
         set_TrackList(prevList);
         generate("{$playlistname}");
     } else if let Some(f) = args.input {
-        openfile(f.clone(), args.vlc.clone(), args.cover.clone());
+        openfile(f.clone());
         return;
     } else {
         window::load();
