@@ -1,9 +1,9 @@
-use std::{fs::File, io::Write, path::Path};
+use std::{fs::File, io::Write, path::{Path, PathBuf}};
 
 use gtk::{prelude::*};
 use std::sync::Mutex;
 
-use crate::{buttons, logic::{self, Track}, parser};
+use crate::{buttons::{self, read_db}, database::{dbtype, plays}, logic::{self, Track}, parser};
 
 static TrackList: Mutex<Vec<logic::Track>> = Mutex::new(vec!());
 
@@ -81,4 +81,36 @@ pub fn coverLoading(app: &gtk::Application) -> (gtk::ProgressBar, gtk::Window) {
     progress.set_margin_top(90);
     mbox.set_center_widget(Some(&progress));
     return (progress, window);
+}
+
+pub fn playlistChooseBox(app: &gtk::Application, mbox: gtk::Box, buf: PathBuf, playlists: Vec<String>) {
+    while let Some(child) = mbox.first_child() {
+        mbox.remove(&child);
+    }
+    let button = buttons::importButtons(&app.clone(),mbox.clone());
+    mbox.append(&button);
+    let scrollBox = gtk::ListBox::new();
+    for i in playlists {
+        let b = playButton(&app.clone(), mbox.clone(), buf.clone(), i.clone());
+        scrollBox.append(&b);
+    }
+    let scroll = gtk::ScrolledWindow::builder()
+        .child(&scrollBox)
+        .vexpand(true)
+        .build();
+    mbox.append(&scroll);
+}
+
+fn playButton(app: &gtk::Application, mbox: gtk::Box, buf: PathBuf, playname: String) -> gtk::Button {
+    let bu = gtk::Button::new();
+    bu.set_label(&playname);
+    let mbc = mbox.clone();
+    let apc = app.clone();
+    let plnc = playname.clone();
+    let pbc = buf.clone();
+    bu.connect_clicked(move |_| {
+        let (pl, tra) = read_db(pbc.clone(), dbtype::Vlc, &plnc.clone());
+        afterBox(&apc.clone(),mbc.clone(), pl, tra);
+    });
+    return bu;
 }

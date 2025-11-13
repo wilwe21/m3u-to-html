@@ -17,7 +17,7 @@ struct data {
 }
 
 #[derive(FromRow, Debug, Clone)]
-struct plays {
+pub struct plays {
     name: String
 }
 
@@ -36,6 +36,17 @@ static fav: &str = "
     INNER JOIN artist ON media.artist_id=artist.id_artist 
     INNER JOIN album ON media.album_id=id_album 
     WHERE media.is_favorite = 1;
+    ";
+    
+static all: &str = "
+    SELECT
+    media.title,
+    artist.name AS artist,
+    album.title AS album,
+    media.track_number AS number
+    FROM media
+    INNER JOIN artist ON media.artist_id=artist.id_artist
+    INNER JOIN album ON media.album_id=id_album;
     ";
 
 static other: &str = "
@@ -79,6 +90,8 @@ async fn vlc(connection: Pool<Sqlite>, name: &str) -> (Vec<Track>, String) {
     println!("{}", name.clone());
     if name == "favorite" {
         med = sqlx::query_as(&fav).fetch_all(&connection).await.unwrap();
+    } else if name == "all" {
+        med = sqlx::query_as(&all).fetch_all(&connection).await.unwrap();
     } else {
         med = sqlx::query_as(&other.replace("DUPA", name)).fetch_all(&connection).await.unwrap();
     }
@@ -93,6 +106,7 @@ async fn vlc_plays(connection: Pool<Sqlite>) -> Vec<String> {
     let play: Vec<plays> = sqlx::query_as(&playlists).fetch_all(&connection).await.unwrap();
     let mut pl2: Vec<String> = play.iter().map(|a| a.name.to_string()).collect();
     pl2.push("favorite".to_string());
+    pl2.push("all".to_string());
     return pl2;
 }
 

@@ -98,12 +98,15 @@ pub fn dbButton(app: &gtk::Application, mBox: gtk::Box) -> gtk::Button {
         f.show();
         let mboxclone = mBox.clone();
         let val = appclone.clone();
+        let val2 = val.clone();
         f.connect_response(move |dialog, response| {
             if response == ResponseType::Accept {
                 if let Some(file) = dialog.file() {
                     if let Some(path_buf) = file.path() {
-                        let (pl, tra) = read_db(path_buf, database::dbtype::Vlc, "favorite");
-                        visual::afterBox(&val.clone(),mboxclone.clone(), pl, tra);
+                        let plfuture = database::dbRequestPlaylists(path_buf.clone().to_str().unwrap().to_string(), database::dbtype::Vlc_playlists);
+                        let rt = Runtime::new().unwrap();
+                        let playlists = rt.block_on(plfuture).unwrap();
+                        visual::playlistChooseBox(&val2.clone(), mboxclone.clone(), path_buf.clone(), playlists);
                     } else {
                         println!("Could not get path from GFile.");
                     }
