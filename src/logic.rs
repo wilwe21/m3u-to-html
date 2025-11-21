@@ -238,12 +238,16 @@ pub fn generate(playlistname: &str) {
         end.push_str(&el.getHTML());
     }
     end.push_str(&tail);
-    gen_output(&end, &playlistname);
+    let o = format!("{}_playlist.html", &playlistname);
+    if let Some(output) = args.output {
+        let o = output.display().to_string();
+    }
+    gen_output(&end, &o);
     println!("[log] created");
 }
 
-fn gen_output(end: &str, filename: &str) {
-    let mut output = File::create(format!("{}_playlist.html", filename));
+fn gen_output(end: &str, out: &str) {
+    let mut output = File::create(out);
     match output {
         Ok(mut o) => {o.write(end.as_bytes());},
         _ => {},

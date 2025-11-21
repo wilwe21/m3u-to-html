@@ -1,0 +1,24 @@
+<div id="{@name}">
+					<div class="playlist">
+					<b>{@name}</b>
+					</div>
+					<div class="mainartist">
+						<img class="cover" src="{@art}">
+						<p>{@description}</p>
+					</div>
+					<div class="playlist">
+					<b>Tags</b>
+					</div>
+					<div class="tags">
+						 {@tags}
+					</div>
+					<div class="topalbums">
+						<div class="playlist">
+						<b>Top Albums</b>
+						</div>
+						<div class="albs">
+							{@albums}
+						</div>
+					</div>
+			</div>
+

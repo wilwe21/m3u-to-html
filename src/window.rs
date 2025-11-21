@@ -1,5 +1,8 @@
+use std::path::Path;
+
 use gtk::prelude::*;
 use gtk::gdk;
+use crate::parser;
 use crate::visual::wind;
 
 pub const id: &str = "com.github.wilwe21.m3utohtml";
@@ -25,7 +28,10 @@ pub fn conf_css() {
     let display = gdk::Display::default().expect("Could not get default display.");
     let provider = gtk::CssProvider::new();
     let priority = gtk::STYLE_PROVIDER_PRIORITY_APPLICATION;
-    let css_content = include_str!("./css/main.css");
+    let css_content: String = match parser::open_file(&Path::new("./css/app.css")) {
+        Ok(file) => file,
+        Err(_) => String::from(include_str!("./css/app.css")),
+    };
     provider.load_from_data(&css_content);
     gtk::StyleContext::add_provider_for_display(&display, &provider, priority);
 }

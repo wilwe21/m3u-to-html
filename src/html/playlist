@@ -1,3 +1,4 @@
+		<div id="PLAYLIST">
 		<div class="playlist">
 			<b>{$playlist}</b>
 		</div>

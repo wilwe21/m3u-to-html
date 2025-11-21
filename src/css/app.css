@@ -1,0 +1,20 @@
+:root {
+	--accent: #CBA6F7;
+	--bg: #181825;
+	--fg: #CDD6F4;
+	--radii: 7px;
+	--padding: 3px;
+	--paddingsmall: 1px;
+	--paddingdos: 6px;
+	
+	font-family: "Adwaita Sans";
+}
+
+.track {
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--padding);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	margin-right: 20px;
+}

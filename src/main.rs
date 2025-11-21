@@ -13,6 +13,7 @@ mod error;
 mod buttons;
 mod database;
 mod cli;
+mod cache;
 
 /// Gtk4 Application to convert playlists to html website
 #[derive(Parser, Debug, Clone)]
@@ -42,9 +43,13 @@ pub struct Args {
     #[arg(long, default_value = "./html")]
     html_path: PathBuf,
 
-    /// path to css folder
+    /// path to css file
     #[arg(long, default_value = "./css/main.css")]
     css_path: PathBuf,
+
+    /// output file input default ./{playlistname}_playlist.html
+    #[arg(short, long)]
+    output: Option<PathBuf>,
 }
 
 static Arguments: Mutex<Vec<Args>> = Mutex::new(vec!());

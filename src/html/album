@@ -1,0 +1,5 @@
+						<div class="album">
+								<img class="cover2" src="{@cover}">
+								<p>{@album}</p>
+						</div>
+

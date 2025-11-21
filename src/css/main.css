@@ -4,18 +4,19 @@
 	--fg: #CDD6F4;
 	--radii: 7px;
 	--padding: 3px;
+	--paddingsmall: 1px;
 	--paddingdos: 6px;
 	
 	font-family: "Adwaita Sans";
 }
 
-.track {
+* {
 	background-color: var(--bg);
 	color: var(--fg);
-	padding: var(--padding);
-	border: 2px solid var(--accent);
-	border-radius: var(--radii);
-	margin-right: 20px;
+}
+
+.hidden {
+	display: none;
 }
 
 .trackHTML {
@@ -78,6 +79,12 @@
 	padding-right: var(--paddingdos);
 }
 
+.cover2 {
+	max-height: 128px;
+	max-width: 128px;
+}
+
+
 .amazon {
 	max-height: 32px;
 	max-width: 32px;
@@ -85,4 +92,66 @@
 
 .nonclick {
 	all: unset;
+}
+
+.mainartist {
+	display: flex;
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--paddingsmall);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	padding-left: var(--padding);
+	padding-right: var(--padding);
+}
+.mainartist > p {
+	margin-top: 3px;
+}
+
+.albs {
+	display: flex;
+	width: 100%;
+	flex-wrap: wrap;
+}
+.albs > * {
+	flex-grow: 100;
+}
+
+.album {
+	width: 128px;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--paddingsmall);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	margin-right: var(--padding);
+	padding-left: var(--padding);
+	padding-right: var(--padding);
+}
+
+.album > p {
+	margin-top: 3px;
+	word-wrap: break-word;
+}
+
+.tags {
+	display: flex;
+	width: 100%;
+	flex-wrap: wrap;
+}
+
+.tags > *{
+	flex-grow: 100;
+	text-align: center;
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--paddingdos);
+	margin-top: var(--padding);
+	margin-bottom: 0px;
+	margin-right: var(--padding);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
 }
