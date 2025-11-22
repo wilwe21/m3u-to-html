@@ -2,13 +2,14 @@ use std::{fs::File, io::Write, path::{Path, PathBuf}};
 
 use dirs::config_dir;
 use gtk::prelude::*;
+use itertools::WhileSome;
 use lofty::{config, file::TaggedFileExt, tag::Accessor};
 
 use quick_xml::Reader;
 use quick_xml::events::{Event};
 use tokio::runtime::Runtime;
 
-use crate::{get_Arguments, parser, visual::{get_ArtistList, get_TrackList}};
+use crate::{artistslogic::Artist, get_Arguments, parser, visual::{get_ArtistList, get_TrackList}};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Track {
@@ -135,7 +136,7 @@ impl Track {
         };
         let mut output: String = String::new();
         for (index, line) in template.lines().enumerate() {
-            match parser::parse_line(&line, &self) {
+            match parser::parse_line(&line, Some(self.clone()), None, None) {
                 Ok(line) => output.push_str(&line),
                 Err(err) => {
                     eprintln!("Error in line {}: {}", index + 1, err);
@@ -147,8 +148,20 @@ impl Track {
 }
 
 pub fn covers(track: &mut Track) -> &mut Track {
+    let args = get_Arguments();
+    let mut html_path = String::new();
+    if let Some(html_p) = args.html_path {
+        html_path = html_p.display().to_string();
+    } else {
+        if let Some(conf_dir) = config_dir() {
+            html_path = format!("{}/m3utohtml/html", conf_dir.display());
+        } else {
+            html_path = "./html".to_string();
+        }
+    }
+    let token_path = format!("{}/token.txt", html_path);
     let mut cover_search_link = "http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=".to_string();
-    let key = match parser::open_file(&Path::new("./html/token.txt")) {
+    let key = match parser::open_file(&Path::new(&token_path)) {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./html/token.txt"))
     }.replace("\n", "");
@@ -168,6 +181,84 @@ pub fn covers(track: &mut Track) -> &mut Track {
         println!("[log] Default cover");
     }
     return track;
+}
+
+pub fn arts(artist: &mut Artist) -> &mut Artist {
+    let args = get_Arguments();
+    let mut html_path = String::new();
+    if let Some(html_p) = args.html_path {
+        html_path = html_p.display().to_string();
+    } else {
+        if let Some(conf_dir) = config_dir() {
+            html_path = format!("{}/m3utohtml/html", conf_dir.display());
+        } else {
+            html_path = "./html".to_string();
+        }
+    }
+    let token_path = format!("{}/token.txt", html_path);
+    let mut cover_search_link = "http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&api_key=".to_string();
+    let key = match parser::open_file(&Path::new(&token_path)) {
+        Ok(file) => file,
+        Err(_) => String::from(include_str!("./html/token.txt"))
+    }.replace("\n", "");
+    cover_search_link.push_str(&format!("{}&artist={}", key, artist.name.replace("&", "%26")));
+    let request = req_art(&cover_search_link);
+    let rt = Runtime::new().unwrap();
+
+    let (cover, desc, tags) = rt.block_on(request);
+    return artist;
+}
+
+pub async fn req_art(url: &str) -> (String, String, Vec<String>) {
+    let request = reqwest::get(url).await.expect("Request Timeout").text().await.expect("Wrong Request");
+
+    let mut cover_url: Option<String> = None;
+    let mut description: Option<String> = None;
+    let mut tags: Vec<String> = vec!();
+
+    let mut reader = Reader::from_str(&request);
+
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(e)) if e.name() == quick_xml::name::QName(b"image") && cover_url.is_none() => {
+                let mut size_attr = None;
+                for a in e.attributes() {
+                    let attr = a.unwrap();
+                    if attr.key == quick_xml::name::QName(b"size") {
+                        size_attr = Some(String::from_utf8(attr.value.into_owned()).unwrap());
+                    }
+                }
+
+                // Get the text content of the <image> tag
+                let text = reader.read_text(e.name()).unwrap();
+
+                if let Some(size) = size_attr {
+                    if size == "large" {
+                        cover_url = Some(text.to_string());
+                    }
+                }
+            },
+            Ok(Event::Start(e)) if e.name() == quick_xml::name::QName(b"tag") => {
+                let mut name = None;
+                for a in e.attributes() {
+                    let attr = a.unwrap();
+                    if attr.key == quick_xml::name::QName(b"name") {
+                        name = Some(String::from_utf8(attr.value.into_owned()).unwrap());
+                    }
+                }
+                if let Some(n) = name {
+                    tags.push(n);
+                }
+            },
+            Ok(Event::Start(e)) if e.name() == quick_xml::name::QName(b"summary") && description.is_none() => {
+                let text = reader.read_text(e.name()).unwrap();
+                description = Some(text.to_string())
+            },
+            Ok(Event::Eof) => break, // Exit loop when EOF is reached
+            _ => (), // Ignore other events
+        }
+    }
+    return (cover_url.unwrap_or("".to_string()), description.unwrap_or("Lorem ipsum".to_string()), tags);
 }
 
 pub async fn req(url: &str) -> String {
@@ -228,7 +319,7 @@ pub fn generate(playlistname: &str) {
     };
     let mut top = String::new();
     for (index, line) in top_template.lines().enumerate() {
-        match parser::parse_line_playlist(line, &playlistname) {
+        match parser::parse_line(line, None, None, Some(playlistname.to_string().clone())) {
             Ok(line) => top.push_str(&line),
             Err(err) => {
                 eprint!("Error in line {}: {}", index+1, err);
@@ -243,7 +334,7 @@ pub fn generate(playlistname: &str) {
     };
     let mut header = String::new();
     for (index, line) in header_template.lines().enumerate() {
-        match parser::parse_line_playlist(line, &playlistname) {
+        match parser::parse_line(line, None, None, Some(playlistname.to_string().clone())) {
             Ok(line) => header.push_str(&line),
             Err(err) => {
                 eprint!("Error in line {}: {}", index+1, err);

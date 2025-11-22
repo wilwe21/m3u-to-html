@@ -69,7 +69,7 @@ impl Artist {
         };
         let mut output: String = String::new();
         for (index, line) in template.lines().enumerate() {
-            match parser::parse_line_artist(&line, &self) {
+            match parser::parse_line(&line, None, Some(self.clone()), None) {
                 Ok(line) => output.push_str(&line),
                 Err(err) => {
                     eprintln!("Error in line {}: {}", index + 1, err);

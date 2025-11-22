@@ -3,3 +3,5 @@
 test.m3u
 test.db
 /src/html/{$playlistname}_playlist.html
+/artist.xml
+
