@@ -2,7 +2,7 @@ use std::{fs::File, io::{self, Read}, path::Path};
 
 use dirs::config_dir;
 
-use crate::{artistslogic::Artist, error::ConfigError, get_Arguments, logic::Track};
+use crate::{artistslogic::{Album, Artist}, error::ConfigError, get_Arguments, logic::Track};
 
 pub fn open_file(path: &Path) -> Result<String, io::Error> {
     let mut file = File::open(path)?;
@@ -11,7 +11,7 @@ pub fn open_file(path: &Path) -> Result<String, io::Error> {
     Ok(contents)
 }
 
-pub fn parse_line(line: &str, track: Option<Track>, art: Option<Artist>, play: Option<String>) -> Result<String, ConfigError> {
+pub fn parse_line(line: &str, track: Option<Track>, art: Option<Artist>, play: Option<String>, alb: Option<Album>) -> Result<String, ConfigError> {
     let mut buffer: String = String::new();
     let mut output: String = String::new();
     let mut inside_braces: bool = false;
@@ -50,7 +50,7 @@ pub fn parse_line(line: &str, track: Option<Track>, art: Option<Artist>, play: O
                     return Err(ConfigError::UnexpectedCurlyBrace);
                 }
                 inside_braces = false;
-                output.push_str(&parse_var(&buffer, track.clone(), art.clone(), play.clone())?);
+                output.push_str(&parse_var(&buffer, track.clone(), art.clone(), play.clone(), alb.clone())?);
             }
             _ => {
                 if inside_braces {
@@ -70,11 +70,13 @@ pub fn parse_line(line: &str, track: Option<Track>, art: Option<Artist>, play: O
     Ok(output)
 }
 
-fn parse_var(var: &str, track: Option<Track>, art: Option<Artist>, playlist: Option<String>) -> Result<String, ConfigError> {
+fn parse_var(var: &str, track: Option<Track>, art: Option<Artist>, playlist: Option<String>, alb: Option<Album>) -> Result<String, ConfigError> {
     match var {
         _ if var.starts_with('$') && track.is_some() => Ok(replace_var(&var[1..], &track.unwrap())?),
         _ if var.starts_with('@') && art.is_some() => Ok(replace_var_artist(&var[1..], &art.unwrap())?),
         _ if var.starts_with('!') && playlist.is_some() => Ok(replace_var_playlist(&var[1..], &playlist.unwrap())?),
+        _ if var.starts_with('^') && alb.is_some() => Ok(replace_var_album(&var[1..], &alb.unwrap())?),
+        _ if var.starts_with('%') => Ok(replace_var_css(&var[1..])?),
         _ => Err(ConfigError::UnknownVariable(String::from(var))),
     }
 }
@@ -114,37 +116,90 @@ fn replace_var_artist(key: &str, art: &Artist) -> Result<String, ConfigError> {
         "name" => art.name.clone(),
         "cover" => art.cover.clone(),
         "description" => art.description.clone(),
-        "tags" => art.tags.join(" ").clone(),
-        "albums" => art.albums.iter().map(|a| a.name.clone()).collect::<Vec<String>>().join(" "),
+        "tags" => art.tags.iter().map(|tag| format!("<p>{}</p>", tag)).collect::<Vec<_>>().join("\n").clone(),
+        "albums" => for_albs(art.albums.clone()),
+        _ => unreachable!(),
+    })
+}
+
+fn for_albs(albums: Vec<Album>) -> String {
+    let mut fin = String::new();
+    for i in albums {
+        let s = for_alb(i);
+        fin.push_str(&s);
+    }
+    return fin;
+}
+
+fn for_alb(album: Album) -> String {
+    let args = get_Arguments();
+    let mut html_path = String::new();
+    if let Some(html_p) = args.html_path {
+        html_path = html_p.display().to_string();
+    } else {
+        if let Some(conf_dir) = config_dir() {
+            html_path = format!("{}/m3utohtml/html", conf_dir.display());
+        } else {
+            html_path = "./html".to_string();
+        }
+    }
+    let album_path = format!("{}/album", html_path);
+    let template: String = match open_file(&Path::new(&album_path)) {
+        Ok(file) => file,
+        Err(_) => String::from(include_str!("./html/album")),
+    };
+    let mut output: String = String::new();
+    for (index, line) in template.lines().enumerate() {
+        match parse_line(&line, None, None, None, Some(album.clone())) {
+            Ok(line) => output.push_str(&line),
+            Err(err) => {
+                eprintln!("Error in line {}: {}", index + 1, err);
+            }
+        }
+    }
+    return output;
+}
+
+const BUILTIN_VARS_ALBUM: &[&str] = &["name", "cover"];
+
+fn replace_var_album(key: &str, alb: &Album) -> Result<String, ConfigError> {
+    if !BUILTIN_VARS_ALBUM.contains(&key) {
+        return Err(ConfigError::UnknownVariable(String::from(key)));
+    }
+
+    Ok(match key {
+        "name" => alb.name.clone(),
+        "cover" => alb.cover.clone(),
         _ => unreachable!(),
     })
 }
 
 fn replace_var_playlist(key: &str, playlist: &str) -> Result<String, ConfigError> {
-    if key == "playlist" || key == "css" {
-        let args = get_Arguments();
-        let mut css_loc = String::new();
-        if let Some(css_path) = args.css_path {
-            css_loc = format!("{}", css_path.display());
-        } else {
-            if let Some(conf_dir) = config_dir() {
-                css_loc = format!("{}/m3utohtml/css/main.css", conf_dir.display());
-            } else {
-                css_loc = format!("./css/main.css");
-            }
-        }
-        let css: String = match open_file(&Path::new(&css_loc)) {
-            Ok(file) => file,
-            Err(_) => String::from(include_str!("./css/main.css")),
-        };
-
-        Ok(match key {
-            "playlist" => playlist.to_string().clone(),
-            "css" => css.clone(),
-            _ => unreachable!(),
-        })
-    } else {
-        return Err(ConfigError::UnknownVariable(String::from(key)));
+    match key {
+        "playlist" => Ok(playlist.to_string().clone()),
+        _ => Err(ConfigError::UnknownVariable(String::from(key))),
     }
 }
 
+fn replace_var_css(key: &str) -> Result<String, ConfigError> {
+    let args = get_Arguments();
+    let mut css_loc = String::new();
+    if let Some(css_path) = args.css_path {
+        css_loc = format!("{}", css_path.display());
+    } else {
+        if let Some(conf_dir) = config_dir() {
+            css_loc = format!("{}/m3utohtml/css/main.css", conf_dir.display());
+        } else {
+            css_loc = format!("./css/main.css");
+        }
+    }
+    let css: String = match open_file(&Path::new(&css_loc)) {
+        Ok(file) => file,
+        Err(_) => String::from(include_str!("./css/main.css")),
+    };
+
+    match key {
+        "css" => Ok(css.clone()),
+        _ => Err(ConfigError::UnknownVariable(String::from(key))),
+    }
+}

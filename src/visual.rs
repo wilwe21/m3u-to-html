@@ -85,7 +85,6 @@ pub fn coverLoading(app: &gtk::Application) -> (gtk::ProgressBar, gtk::Window) {
         .title("Loading Covers")
         .modal(true)
         .application(app)
-        .destroy_with_parent(true)
         .resizable(false)
         .visible(false)
         .transient_for(parrent)

@@ -200,8 +200,7 @@ pub fn getArtistsData(app: &gtk::Application) -> gtk::Button {
             let size = artists.clone().len();
             let mut new: Vec<Artist> = vec!();
             for (n,t) in &mut artists.clone().into_iter().enumerate() {
-                let mut art = Artist::example();
-                art.set_name(t.to_string());
+                let mut art = logic::arts(&t.clone());
                 new.push(art.clone());
                 sender.send_blocking(((n+1) as f64/size as f64).to_string());
             }

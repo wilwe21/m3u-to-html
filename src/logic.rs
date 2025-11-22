@@ -2,14 +2,14 @@ use std::{fs::File, io::Write, path::{Path, PathBuf}};
 
 use dirs::config_dir;
 use gtk::prelude::*;
-use itertools::WhileSome;
+use itertools::{Itertools, WhileSome};
 use lofty::{config, file::TaggedFileExt, tag::Accessor};
 
 use quick_xml::Reader;
 use quick_xml::events::{Event};
 use tokio::runtime::Runtime;
 
-use crate::{artistslogic::Artist, get_Arguments, parser, visual::{get_ArtistList, get_TrackList}};
+use crate::{artistslogic::{Album, Artist}, get_Arguments, parser, visual::{get_ArtistList, get_TrackList}};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Track {
@@ -136,7 +136,7 @@ impl Track {
         };
         let mut output: String = String::new();
         for (index, line) in template.lines().enumerate() {
-            match parser::parse_line(&line, Some(self.clone()), None, None) {
+            match parser::parse_line(&line, Some(self.clone()), None, None, None) {
                 Ok(line) => output.push_str(&line),
                 Err(err) => {
                     eprintln!("Error in line {}: {}", index + 1, err);
@@ -183,7 +183,7 @@ pub fn covers(track: &mut Track) -> &mut Track {
     return track;
 }
 
-pub fn arts(artist: &mut Artist) -> &mut Artist {
+pub fn arts(artist: &str) -> Artist {
     let args = get_Arguments();
     let mut html_path = String::new();
     if let Some(html_p) = args.html_path {
@@ -201,12 +201,15 @@ pub fn arts(artist: &mut Artist) -> &mut Artist {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./html/token.txt"))
     }.replace("\n", "");
-    cover_search_link.push_str(&format!("{}&artist={}", key, artist.name.replace("&", "%26")));
+    cover_search_link.push_str(&format!("{}&artist={}", key, artist.replace("&", "%26")));
     let request = req_art(&cover_search_link);
     let rt = Runtime::new().unwrap();
 
     let (cover, desc, tags) = rt.block_on(request);
-    return artist;
+    let findesc = html_escape::decode_html_entities(&desc).to_string();
+    let albs = vec!(Album::example(), Album::example(), Album::example());
+    let artist_fin = Artist::new(artist.to_string(), cover, findesc, tags, albs);
+    return artist_fin;
 }
 
 pub async fn req_art(url: &str) -> (String, String, Vec<String>) {
@@ -239,16 +242,8 @@ pub async fn req_art(url: &str) -> (String, String, Vec<String>) {
                 }
             },
             Ok(Event::Start(e)) if e.name() == quick_xml::name::QName(b"tag") => {
-                let mut name = None;
-                for a in e.attributes() {
-                    let attr = a.unwrap();
-                    if attr.key == quick_xml::name::QName(b"name") {
-                        name = Some(String::from_utf8(attr.value.into_owned()).unwrap());
-                    }
-                }
-                if let Some(n) = name {
-                    tags.push(n);
-                }
+                let text = reader.read_text(e.name()).unwrap().split("\n").collect::<Vec<_>>()[0].replace("<name>", "").replace("</name>", "");
+                tags.push(text);
             },
             Ok(Event::Start(e)) if e.name() == quick_xml::name::QName(b"summary") && description.is_none() => {
                 let text = reader.read_text(e.name()).unwrap();
@@ -319,7 +314,7 @@ pub fn generate(playlistname: &str) {
     };
     let mut top = String::new();
     for (index, line) in top_template.lines().enumerate() {
-        match parser::parse_line(line, None, None, Some(playlistname.to_string().clone())) {
+        match parser::parse_line(line, None, None, Some(playlistname.to_string().clone()), None) {
             Ok(line) => top.push_str(&line),
             Err(err) => {
                 eprint!("Error in line {}: {}", index+1, err);
@@ -334,7 +329,7 @@ pub fn generate(playlistname: &str) {
     };
     let mut header = String::new();
     for (index, line) in header_template.lines().enumerate() {
-        match parser::parse_line(line, None, None, Some(playlistname.to_string().clone())) {
+        match parser::parse_line(line, None, None, Some(playlistname.to_string().clone()), None) {
             Ok(line) => header.push_str(&line),
             Err(err) => {
                 eprint!("Error in line {}: {}", index+1, err);

@@ -17,6 +17,14 @@ fn on_active(app: &gtk::Application) {
     conf_css();
     window.set_child(Some(&mainBox));
     window.show();
+    let appclone = app.clone();
+    window.connect_close_request(move |_| {
+        for win in appclone.windows() {
+            win.destroy();
+        };
+        appclone.quit();
+        return gtk::glib::Propagation::Stop;
+    });
 }
 
 pub fn load() {

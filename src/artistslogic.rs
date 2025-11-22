@@ -46,8 +46,24 @@ impl Artist {
         };
     }
     
-    pub fn set_name(&mut self, name: String) {
-        self.name = name;
+    pub fn set_name(&mut self, name: &str) {
+        self.name = name.to_string();
+    }
+
+    pub fn set_cover(&mut self, cover: &str) {
+        self.cover = cover.to_string();
+    }
+
+    pub fn set_description(&mut self, desc: &str) {
+        self.description = desc.to_string();
+    }
+    
+    pub fn set_tags(&mut self, tags: Vec<String>) {
+        self.tags = tags;
+    }
+
+    pub fn add_tag(&mut self, tag: &str) {
+        self.tags.push(tag.to_string());
     }
 
     pub fn getHTML(self) -> String {
@@ -69,7 +85,7 @@ impl Artist {
         };
         let mut output: String = String::new();
         for (index, line) in template.lines().enumerate() {
-            match parser::parse_line(&line, None, Some(self.clone()), None) {
+            match parser::parse_line(&line, None, Some(self.clone()), None, None) {
                 Ok(line) => output.push_str(&line),
                 Err(err) => {
                     eprintln!("Error in line {}: {}", index + 1, err);
