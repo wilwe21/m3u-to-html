@@ -1,7 +1,8 @@
 use std::{fs::File, io::Write, path::{Path, PathBuf}};
 
+use dirs::config_dir;
 use gtk::prelude::*;
-use lofty::{file::TaggedFileExt, tag::Accessor};
+use lofty::{config, file::TaggedFileExt, tag::Accessor};
 
 use quick_xml::Reader;
 use quick_xml::events::{Event};
@@ -198,7 +199,17 @@ pub async fn req(url: &str) -> String {
 
 pub fn generate(playlistname: &str) {
     let args = get_Arguments();
-    let top_loc = format!("{}/playlist", args.html_path.display());
+    let mut html_path = String::new();
+    if let Some(html_p) = args.html_path {
+        html_path = html_p.display().to_string();
+    } else {
+        if let Some(conf_dir) = config_dir() {
+            html_path = format!("{}/m3utohtml/html", conf_dir.display());
+        } else {
+            html_path = "./html".to_string();
+        }
+    }
+    let top_loc = format!("{}/playlist", html_path);
     let top_template: String = match parser::open_file(&Path::new(&top_loc)) {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./html/playlist")),
@@ -213,7 +224,7 @@ pub fn generate(playlistname: &str) {
         }
     }
     let mut end = String::new();
-    let head_loc = format!("{}/header", args.html_path.display());
+    let head_loc = format!("{}/header", html_path);
     let header_template: String = match parser::open_file(&Path::new(&head_loc)) {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./html/header")),
@@ -228,7 +239,7 @@ pub fn generate(playlistname: &str) {
         }
     }
     end.push_str(&header);
-    let tail_loc = format!("{}/tai;", args.html_path.display());
+    let tail_loc = format!("{}/tai;", html_path);
     let tail: String = match parser::open_file(&Path::new(&tail_loc)) {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./html/tail")),

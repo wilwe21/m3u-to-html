@@ -1,5 +1,7 @@
 use std::{fs::File, io::{self, Read}, path::Path};
 
+use dirs::config_dir;
+
 use crate::{error::ConfigError, get_Arguments, logic::Track};
 
 pub fn open_file(path: &Path) -> Result<String, io::Error> {
@@ -167,7 +169,16 @@ fn replace_var(key: &str, track: &Track) -> Result<String, ConfigError> {
 fn replace_var_playlist(key: &str, playlist: &str) -> Result<String, ConfigError> {
     if key == "playlist" || key == "css" {
         let args = get_Arguments();
-        let css_loc = format!("{}", args.css_path.display());
+        let mut css_loc = String::new();
+        if let Some(css_path) = args.css_path {
+            css_loc = format!("{}", css_path.display());
+        } else {
+            if let Some(conf_dir) = config_dir() {
+                css_loc = format!("{}/m3utohtml/css/main.css", conf_dir.display());
+            } else {
+                css_loc = format!("./css/main.css");
+            }
+        }
         let css: String = match open_file(&Path::new(&css_loc)) {
             Ok(file) => file,
             Err(_) => String::from(include_str!("./css/main.css")),

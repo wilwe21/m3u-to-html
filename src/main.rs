@@ -1,5 +1,5 @@
-use std::{path::{Path, PathBuf}, sync::Mutex};
-use clap::{Arg, Parser, builder::Str};
+use std::{path::{PathBuf}, sync::Mutex};
+use clap::{Parser};
 
 use cli::openfile;
 use logic::generate;
@@ -39,13 +39,13 @@ pub struct Args {
     #[arg(short, long)]
     input: Option<PathBuf>,
 
-    /// path to html folder
-    #[arg(long, default_value = "./html")]
-    html_path: PathBuf,
+    /// path to html folder default config_dir/html
+    #[arg(long)]
+    html_path: Option<PathBuf>,
 
-    /// path to css file
-    #[arg(long, default_value = "./css/main.css")]
-    css_path: PathBuf,
+    /// path to css file default config_dir/css/main.css
+    #[arg(long)]
+    css_path: Option<PathBuf>,
 
     /// output file input default ./{playlistname}_playlist.html
     #[arg(short, long)]

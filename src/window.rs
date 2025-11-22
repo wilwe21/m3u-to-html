@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use dirs::config_dir;
 use gtk::prelude::*;
 use gtk::gdk;
 use crate::parser;
@@ -28,7 +29,13 @@ pub fn conf_css() {
     let display = gdk::Display::default().expect("Could not get default display.");
     let provider = gtk::CssProvider::new();
     let priority = gtk::STYLE_PROVIDER_PRIORITY_APPLICATION;
-    let css_content: String = match parser::open_file(&Path::new("./css/app.css")) {
+    let mut css_path = String::new();
+    if let Some(css) = config_dir() {
+        css_path = format!("{}/m3utohtml/css/app.css", css.display());
+    } else {
+        css_path = "./css/app.css".to_string();
+    }
+    let css_content: String = match parser::open_file(&Path::new(&css_path)) {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./css/app.css")),
     };
