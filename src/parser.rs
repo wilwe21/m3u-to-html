@@ -2,7 +2,7 @@ use std::{fs::File, io::{self, Read}, path::Path};
 
 use dirs::config_dir;
 
-use crate::{error::ConfigError, get_Arguments, logic::Track};
+use crate::{artistslogic::Artist, error::ConfigError, get_Arguments, logic::Track};
 
 pub fn open_file(path: &Path) -> Result<String, io::Error> {
     let mut file = File::open(path)?;
@@ -76,6 +76,73 @@ fn parse_var(var: &str, track: &Track) -> Result<String, ConfigError> {
         _ => Err(ConfigError::UnknownVariable(String::from(var))),
     }
 }
+
+pub fn parse_line_artist(line: &str, art: &Artist) -> Result<String, ConfigError> {
+    let mut buffer: String = String::new();
+    let mut output: String = String::new();
+    let mut inside_braces: bool = false;
+    let mut escape_next: bool = false;
+
+    for char in line.chars() {
+        if escape_next {
+            match char {
+                '{' | '}' | '\\' => buffer.push(char),
+                _ => {
+                    buffer.push('\\');
+                    buffer.push(char);
+                }
+            }
+            escape_next = false;
+            continue;
+        }
+
+        match char {
+            '\\' => {
+                if inside_braces {
+                    escape_next = true;
+                } else {
+                    output.push('\\');
+                }
+            }
+            '{' => {
+                if inside_braces {
+                    return Err(ConfigError::UnexpectedCurlyBrace);
+                }
+                inside_braces = true;
+                buffer.clear();
+            }
+            '}' => {
+                if !inside_braces {
+                    return Err(ConfigError::UnexpectedCurlyBrace);
+                }
+                inside_braces = false;
+                output.push_str(&parse_var_artist(&buffer, art)?);
+            }
+            _ => {
+                if inside_braces {
+                    buffer.push(char);
+                } else {
+                    output.push(char);
+                }
+            }
+        }
+    }
+
+    if inside_braces {
+        return Err(ConfigError::UnexpectedCurlyBrace);
+    }
+
+    output.push('\n');
+    Ok(output)
+}
+
+fn parse_var_artist(var: &str, art: &Artist) -> Result<String, ConfigError> {
+    match var {
+        _ if var.starts_with('@') => Ok(replace_var_artist(&var[1..], art)?),
+        _ => Err(ConfigError::UnknownVariable(String::from(var))),
+    }
+}
+
 pub fn parse_line_playlist(line: &str, playlist: &str) -> Result<String, ConfigError> {
     let mut buffer: String = String::new();
     let mut output: String = String::new();
@@ -162,6 +229,23 @@ fn replace_var(key: &str, track: &Track) -> Result<String, ConfigError> {
         "tracknumber" => numb.clone(),
         "artist" => track.artist.clone(),
         "cover" => track.cover.clone(),
+        _ => unreachable!(),
+    })
+}
+
+const BUILTIN_VARS_ARTIST: &[&str] = &["name", "cover", "description", "tags", "albums"];
+
+fn replace_var_artist(key: &str, art: &Artist) -> Result<String, ConfigError> {
+    if !BUILTIN_VARS_ARTIST.contains(&key) {
+        return Err(ConfigError::UnknownVariable(String::from(key)));
+    }
+
+    Ok(match key {
+        "name" => art.name.clone(),
+        "cover" => art.cover.clone(),
+        "description" => art.description.clone(),
+        "tags" => art.tags.join(" ").clone(),
+        "albums" => art.albums.iter().map(|a| a.name.clone()).collect::<Vec<String>>().join(" "),
         _ => unreachable!(),
     })
 }

@@ -8,7 +8,7 @@ use quick_xml::Reader;
 use quick_xml::events::{Event};
 use tokio::runtime::Runtime;
 
-use crate::{get_Arguments, parser, visual::get_TrackList};
+use crate::{get_Arguments, parser, visual::{get_ArtistList, get_TrackList}};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Track {
@@ -117,7 +117,19 @@ impl Track {
     }
 
     pub fn getHTML(&self) -> String {
-        let template: String = match parser::open_file(&Path::new("./html/track")) {
+        let args = get_Arguments();
+        let mut html_path = String::new();
+        if let Some(html_p) = args.html_path {
+            html_path = html_p.display().to_string();
+        } else {
+            if let Some(conf_dir) = config_dir() {
+                html_path = format!("{}/m3utohtml/html", conf_dir.display());
+            } else {
+                html_path = "./html".to_string();
+            }
+        }
+        let track_path = format!("{}/track", html_path);
+        let template: String = match parser::open_file(&Path::new(&track_path)) {
             Ok(file) => file,
             Err(_) => String::from(include_str!("./html/track")),
         };
@@ -239,7 +251,7 @@ pub fn generate(playlistname: &str) {
         }
     }
     end.push_str(&header);
-    let tail_loc = format!("{}/tai;", html_path);
+    let tail_loc = format!("{}/tail", html_path);
     let tail: String = match parser::open_file(&Path::new(&tail_loc)) {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./html/tail")),
@@ -247,6 +259,11 @@ pub fn generate(playlistname: &str) {
     end.push_str(&top);
     for el in &get_TrackList() {
         end.push_str(&el.getHTML());
+    }
+    end.push_str("</div>");
+    let artists = get_ArtistList();
+    for art in artists {
+        end.push_str(&art.getHTML());
     }
     end.push_str(&tail);
     let o = format!("{}_playlist.html", &playlistname);

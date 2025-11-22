@@ -1,10 +1,11 @@
 use std::{clone, fs, path::PathBuf, str::FromStr, thread::sleep, time::Duration};
 
 use gtk::{ResponseType, gio::LocalTask, glib::value, prelude::*};
+use itertools::Itertools;
 use sqlx::Database;
 use tokio::runtime::Runtime;
 
-use crate::{database, logic::{self, Track, covers}, visual::{self, wind}};
+use crate::{artistslogic::{self, Artist}, database, logic::{self, Track, covers}, visual::{self, wind}};
 
 pub fn importButtons(app: &gtk::Application, mBox: gtk::Box) -> gtk::Box {
     let horibox = gtk::Box::new(gtk::Orientation::Horizontal, 1);
@@ -160,6 +161,53 @@ pub fn getCoversButton(app: &gtk::Application) -> gtk::Button {
             visual::set_TrackList(new.clone());
             sender.send_blocking(endsig.clone());
             println!("[log] generated Covers");
+        });
+    });
+    return button;
+}
+
+pub fn getArtistsData(app: &gtk::Application) -> gtk::Button {
+    let button = gtk::Button::builder()
+        .label("Get Artists")
+        .build();
+    let appclone = app.clone();
+    let (progres, window) = visual::coverLoading(&appclone.clone());
+    progres.set_fraction(0.0);
+    let progclon = progres.clone();
+    let winclon = window.clone();
+    button.connect_clicked(move |_| {
+        let (sender, receiver) = async_channel::unbounded::<String>();
+        winclon.present();
+        winclon.show();
+        winclon.set_visible(true);
+        let endsig = "exit".to_string();
+        let value = progclon.clone();
+        let value2 = winclon.clone();
+        let value3 = endsig.clone();
+        gtk::glib::spawn_future_local(async move {
+            let progclonclon = value.clone();
+            let winclonclon = value2.clone();
+            let endsigclon = value3.clone();
+            while let Ok(stat) = receiver.recv().await {
+                match stat {
+                    val if val == endsigclon.clone() => winclonclon.hide(),
+                    _ => progclonclon.set_fraction(stat.parse().unwrap())
+                }
+            }
+        });
+        gtk::gio::spawn_blocking(move || {
+            let artists = visual::get_TrackList().iter().map(|a| a.artist.to_string()).collect::<Vec<String>>().into_iter().unique().collect::<Vec<String>>();
+            let size = artists.clone().len();
+            let mut new: Vec<Artist> = vec!();
+            for (n,t) in &mut artists.clone().into_iter().enumerate() {
+                let mut art = Artist::example();
+                art.set_name(t.to_string());
+                new.push(art.clone());
+                sender.send_blocking(((n+1) as f64/size as f64).to_string());
+            }
+            visual::set_ArtistList(new);
+            sender.send_blocking(endsig.clone());
+            println!("[log] generated Artists Data");
         });
     });
     return button;

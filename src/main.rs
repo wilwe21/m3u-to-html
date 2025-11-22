@@ -14,6 +14,7 @@ mod buttons;
 mod database;
 mod cli;
 mod cache;
+mod artistslogic;
 
 /// Gtk4 Application to convert playlists to html website
 #[derive(Parser, Debug, Clone)]

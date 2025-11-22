@@ -3,7 +3,7 @@
 					<b>{@name}</b>
 					</div>
 					<div class="mainartist">
-						<img class="cover" src="{@art}">
+						<img class="cover" src="{@cover}">
 						<p>{@description}</p>
 					</div>
 					<div class="playlist">

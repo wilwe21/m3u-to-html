@@ -3,7 +3,7 @@ use std::{fs::File, io::Write, path::{Path, PathBuf}};
 use gtk::{prelude::*};
 use std::sync::Mutex;
 
-use crate::{buttons::{self, read_db}, database::{dbtype, plays}, logic::{self, Track}, parser};
+use crate::{artistslogic, buttons::{self, read_db}, database::{dbtype, plays}, logic::{self, Track}, parser};
 
 static TrackList: Mutex<Vec<logic::Track>> = Mutex::new(vec!());
 
@@ -17,6 +17,20 @@ pub fn set_TrackList(tracks: Vec<logic::Track>) {
 pub fn get_TrackList() -> Vec<logic::Track> {
     return TrackList.lock().unwrap().to_vec();
 }
+
+static ArtistList: Mutex<Vec<artistslogic::Artist>> = Mutex::new(vec!());
+
+pub fn set_ArtistList(arts: Vec<artistslogic::Artist>) {
+    ArtistList.lock().unwrap().clear();
+    for t in arts.clone() {
+        ArtistList.lock().unwrap().push(t);
+    }
+}
+
+pub fn get_ArtistList() -> Vec<artistslogic::Artist> {
+    return ArtistList.lock().unwrap().to_vec();
+}
+
 
 
 pub fn wind(app: &gtk::Application) -> gtk::Box {
@@ -47,6 +61,8 @@ pub fn afterBox(app: &gtk::Application, mbox: gtk::Box, tracks: Vec<Track>, play
     mbox.append(&scroll);
     let getcov = buttons::getCoversButton(&app.clone());
     mbox.append(&getcov);
+    let getart = buttons::getArtistsData(&app.clone());
+    mbox.append(&getart);
     let create = gtk::Button::builder()
         .label("Create")
         .build();
