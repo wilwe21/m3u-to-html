@@ -196,18 +196,21 @@ pub fn arts(artist: &str) -> Artist {
         }
     }
     let token_path = format!("{}/token.txt", html_path);
-    let mut cover_search_link = "http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&api_key=".to_string();
+    let mut overall_search_link = "http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&api_key=".to_string();
+    let mut albums_search_link = "http://ws.audioscrobbler.com/2.0/?method=artist.gettopalbums&api_key=".to_string();
     let key = match parser::open_file(&Path::new(&token_path)) {
         Ok(file) => file,
         Err(_) => String::from(include_str!("./html/token.txt"))
     }.replace("\n", "");
-    cover_search_link.push_str(&format!("{}&artist={}", key, artist.replace("&", "%26")));
-    let request = req_art(&cover_search_link);
+    overall_search_link.push_str(&format!("{}&artist={}", key, artist.replace("&", "%26")));
+    albums_search_link.push_str(&format!("{}&artist={}", key, artist.replace("&", "%26")));
+    let request = req_art(&overall_search_link);
+    let requestalbs = req_albums(&albums_search_link);
     let rt = Runtime::new().unwrap();
 
     let (cover, desc, tags) = rt.block_on(request);
+    let albs = rt.block_on(requestalbs);
     let findesc = html_escape::decode_html_entities(&desc).to_string();
-    let albs = vec!(Album::example(), Album::example(), Album::example());
     let artist_fin = Artist::new(artist.to_string(), cover, findesc, tags, albs);
     return artist_fin;
 }
@@ -254,6 +257,33 @@ pub async fn req_art(url: &str) -> (String, String, Vec<String>) {
         }
     }
     return (cover_url.unwrap_or("".to_string()), description.unwrap_or("Lorem ipsum".to_string()), tags);
+}
+
+pub async fn req_albums(url: &str) -> Vec<Album> {
+    let request = reqwest::get(url).await.expect("Request Timeout").text().await.expect("Wrong Request");
+
+    let mut albums = vec!();
+
+    let mut reader = Reader::from_str(&request);
+
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(e)) if e.name() == quick_xml::name::QName(b"album") => {
+                let array = reader.read_text(e.name()).unwrap().split("\n").map(|a| a.to_string()).collect::<Vec<String>>();
+                let mut text = array.join("\n");
+                text.push_str("\n</album>");
+                let covers =  array.clone().into_iter().filter(|a| a.starts_with("<image")).collect::<Vec<String>>();
+                let cover = covers[2].replace("<image size=\"large\">", "").replace("</image>", "");
+
+                let name = array[0].replace("<name>", "").replace("</name>", "");
+                let n = Album::new(name, cover);
+                albums.push(n);
+            },
+            Ok(Event::Eof) => break, // Exit loop when EOF is reached
+            _ => (), // Ignore other events
+        }
+    }
+    return albums;
 }
 
 pub async fn req(url: &str) -> String {

@@ -12,7 +12,7 @@
 			</div>
 			<div class="divine2">
 				<div class="artistHTML bottom">
-					<a class="nonclick">{$artist}</a>
+					<a class="nonclick" onClick="toggleView('{$artist}')">{$artist}</a>
 				</div>
 				<div class="top">
 				<div class="linksHTML">

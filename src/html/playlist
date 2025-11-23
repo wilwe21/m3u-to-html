@@ -1,4 +1,4 @@
-		<div id="PLAYLIST">
 		<div class="playlist">
-			<b>{!playlist}</b>
+			<a onClick="toggleView('PLAYLIST')">{!playlist}</a>
 		</div>
+		<div id="PLAYLIST" class="view-screen">

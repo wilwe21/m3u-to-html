@@ -200,7 +200,7 @@ pub fn getArtistsData(app: &gtk::Application) -> gtk::Button {
             let size = artists.clone().len();
             let mut new: Vec<Artist> = vec!();
             for (n,t) in &mut artists.clone().into_iter().enumerate() {
-                let mut art = logic::arts(&t.clone());
+                let art = logic::arts(&t.clone());
                 new.push(art.clone());
                 sender.send_blocking(((n+1) as f64/size as f64).to_string());
             }
@@ -228,3 +228,21 @@ pub fn gencover(tracks: Vec<Track>, print: bool) -> Vec<Track> {
     }
     return new;
 }
+pub fn genartist(tracks: Vec<Track>, print: bool) -> Vec<Artist> {
+    let artists = tracks.iter().map(|a| a.artist.to_string()).collect::<Vec<String>>().into_iter().unique().collect::<Vec<String>>();
+    let mut new = vec!();
+    let size = artists.len();
+    for (n, t) in &mut artists.clone().into_iter().enumerate() {
+        let art = logic::arts(&t.clone());
+        new.push(art.clone());
+        if print {
+            if n > 0 {
+                println!("\x1B[1A{}/{}", n+1, size);
+            } else {
+                println!("{}/{}", n+1, size);
+            }
+        }
+    }
+    return new;
+}
+

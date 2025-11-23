@@ -1,4 +1,4 @@
-<div id="{@name}">
+<div id="{@name}" class="hidden view-screen">
 					<div class="playlist">
 					<b>{@name}</b>
 					</div>

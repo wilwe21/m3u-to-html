@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{buttons::{self, gencover}, database, get_Arguments, logic, visual::set_TrackList};
+use crate::{buttons::{self, gencover}, database, get_Arguments, logic, visual::{set_ArtistList, set_TrackList}};
 
 pub fn openfile(file: PathBuf) {
     let args = get_Arguments();
@@ -11,17 +11,25 @@ pub fn openfile(file: PathBuf) {
         let (pl, tra) = buttons::read_db(file, database::dbtype::Vlc, &vlc);
         set_TrackList(pl.clone());
         if args.cover {
-            let pl2 = gencover(pl, true);
+            let pl2 = gencover(pl.clone(), true);
             set_TrackList(pl2);
         }        
+        if args.artist {
+            let arts = buttons::genartist(pl, true);
+            set_ArtistList(arts);
+        }
         logic::generate(&tra);
     } else {
         let (tra, pl) = buttons::read_file(file);
         set_TrackList(pl.clone());
         if args.cover {
-            let pl2 = gencover(pl, true);
+            let pl2 = gencover(pl.clone(), true);
             set_TrackList(pl2);
         }        
+        if args.artist {
+            let arts = buttons::genartist(pl, true);
+            set_ArtistList(arts);
+        }
         logic::generate(&tra);
     }
 }

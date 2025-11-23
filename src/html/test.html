@@ -8,18 +8,19 @@
 	--fg: #CDD6F4;
 	--radii: 7px;
 	--padding: 3px;
+	--paddingsmall: 1px;
 	--paddingdos: 6px;
 	
 	font-family: "Adwaita Sans";
 }
 
-.track {
+* {
 	background-color: var(--bg);
 	color: var(--fg);
-	padding: var(--padding);
-	border: 2px solid var(--accent);
-	border-radius: var(--radii);
-	margin-right: 20px;
+}
+
+.hidden {
+	display: none;
 }
 
 .trackHTML {
@@ -82,6 +83,12 @@
 	padding-right: var(--paddingdos);
 }
 
+.cover2 {
+	max-height: 128px;
+	max-width: 128px;
+}
+
+
 .amazon {
 	max-height: 32px;
 	max-width: 32px;
@@ -91,12 +98,75 @@
 	all: unset;
 }
 
+.mainartist {
+	display: flex;
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--paddingsmall);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	padding-left: var(--padding);
+	padding-right: var(--padding);
+}
+.mainartist > p {
+	margin-top: 3px;
+}
+
+.albs {
+	display: flex;
+	width: 100%;
+	flex-wrap: wrap;
+}
+.albs > * {
+	flex-grow: 100;
+}
+
+.album {
+	width: 128px;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--paddingsmall);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+	margin-right: var(--padding);
+	padding-left: var(--padding);
+	padding-right: var(--padding);
+}
+
+.album > p {
+	margin-top: 3px;
+	word-wrap: break-word;
+}
+
+.tags {
+	display: flex;
+	width: 100%;
+	flex-wrap: wrap;
+}
+
+.tags > *{
+	flex-grow: 100;
+	text-align: center;
+	background-color: var(--bg);
+	color: var(--fg);
+	padding: var(--paddingdos);
+	margin-top: var(--padding);
+	margin-bottom: 0px;
+	margin-right: var(--padding);
+	border: 2px solid var(--accent);
+	border-radius: var(--radii);
+}
+
 		</style>
 	</head>
 	<body>
 		<div class="playlist">
-			<b>{$playlistname}</b>
+			<a onClick="toggleView('PLAYLIST')">{$playlistname}</a>
 		</div>
+		<div id="PLAYLIST" class="view-screen">
 		<div class="trackHTML">
 			<div class="cover">
 				<img class="cover" src="https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47" />
@@ -111,7 +181,7 @@
 			</div>
 			<div class="divine2">
 				<div class="artistHTML bottom">
-					<a class="nonclick">{$artist}</a>
+					<a class="nonclick" onClick="toggleView('{$artist}')">{$artist}</a>
 				</div>
 				<div class="top">
 				<div class="linksHTML">
@@ -127,8 +197,69 @@
 				</div>
 			</div>
 		</div>
-		<div class="footer">
+</div><div id="{$artist}" class="hidden view-screen">
+					<div class="playlist">
+					<b>{$artist}</b>
+					</div>
+					<div class="mainartist">
+						<img class="cover" src="https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47">
+						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+					</div>
+					<div class="playlist">
+					<b>Tags</b>
+					</div>
+					<div class="tags">
+						 <p>Pop</p>
+<p>Rock</p>
+<p>Electro</p>
+					</div>
+					<div class="topalbums">
+						<div class="playlist">
+						<b>Top Albums</b>
+						</div>
+						<div class="albs">
+													<div class="album">
+								<img class="cover2" src="https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47">
+								<p>Example</p>
+						</div>
+
+						<div class="album">
+								<img class="cover2" src="https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47">
+								<p>Example</p>
+						</div>
+
+						<div class="album">
+								<img class="cover2" src="https://lastfm.freetls.fastly.net/i/u/770x0/0248ee38f8d45f32fe6fad5d43e64f47.jpg#0248ee38f8d45f32fe6fad5d43e64f47">
+								<p>Example</p>
+						</div>
+
+
+						</div>
+					</div>
+			</div>
+
+			<div class="footer">
 			<a class="source" target="_blank" href="https://github.com/wilwe21/m3u-to-html">source</a>
 		</div>
+<script>
+        function toggleView(viewId) {
+            const allViews = document.querySelectorAll('.view-screen');
+            allViews.forEach(view => {
+                view.classList.add('hidden');
+            });
+
+            const targetElement = document.getElementById(viewId);
+
+            if (targetElement) {
+                targetElement.classList.remove('hidden');
+            } else {
+                console.error(`Error: Element with ID '${viewId}' not found.`);
+            }
+        }
+
+        window.onload = () => {
+             toggleView('PLAYLIST');
+        };
+    </script>
 	</body>
 </html>

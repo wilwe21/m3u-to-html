@@ -3,7 +3,7 @@ use clap::{Parser};
 
 use cli::openfile;
 use logic::generate;
-use visual::set_TrackList;
+use visual::{set_ArtistList, set_TrackList};
 
 mod window;
 mod visual;
@@ -35,6 +35,10 @@ pub struct Args {
     /// generate covers for cli mode
     #[arg(short, long, action = clap::ArgAction::SetTrue)]
     cover: bool,
+
+    /// generate artist data for cli mode
+    #[arg(short, long, action = clap::ArgAction::SetTrue)]
+    artist: bool,
 
     /// cli mode file input
     #[arg(short, long)]
@@ -69,7 +73,9 @@ fn main() {
     set_Arguments(args.clone());
     if args.preview {
         let prevList = vec!(logic::Track::example());
+        let prevArtist = vec!(artistslogic::Artist::example());
         set_TrackList(prevList);
+        set_ArtistList(prevArtist);
         generate("{$playlistname}");
     } else if let Some(f) = args.input {
         openfile(f.clone());
