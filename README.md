@@ -26,3 +26,6 @@ This program converts playlists into html with many streaming links
 
 - **Generic Overview** - Overview stats
 - **Count of entries** - Total numbers of songs
+- **Cache** - cache to not ask lastfm for every data
+- **Clear casche** - option to clear cache
+- **Custom Default cover** - option to set custom cover for songs that don't have cover art
